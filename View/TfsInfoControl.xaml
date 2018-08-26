@@ -1,0 +1,22 @@
+<commonView:BaseControl
+    x:Class="GitTfsShell.View.TfsInfoControl"
+    x:ClassModifier="internal"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:commonView="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View"
+    xmlns:controls="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock"
+    xmlns:data="clr-namespace:GitTfsShell.Data"
+    HorizontalAlignment="Stretch"
+    d:DataContext="{d:DesignInstance d:Type=data:TfsInfo}">
+    <StackPanel
+        commonView:MarginSetter.Margin="10">
+        <Separator />
+        <controls:SelectableTextBlock
+            Text="{Binding WorkspaceName, Mode=OneTime, StringFormat=TFS workspace: {0}}" />
+        <controls:SelectableTextBlock
+            Text="{Binding MappedServerFolder, Mode=OneTime, StringFormat=TFS directory: {0}}" />
+    </StackPanel>
+</commonView:BaseControl>

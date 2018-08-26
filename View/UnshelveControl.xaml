@@ -1,0 +1,121 @@
+<commonView:BaseControl
+    x:Class="GitTfsShell.View.UnshelveControl"
+    x:ClassModifier="internal"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:commonView="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View"
+    xmlns:behaviors="clr-namespace:Scar.Common.WPF.Controls.Behaviors;assembly=Scar.Common.WPF.Controls.Behaviors"
+    xmlns:viewModel="clr-namespace:GitTfsShell.ViewModel"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    HorizontalAlignment="Stretch"
+    d:DataContext="{d:DesignInstance d:Type=viewModel:UnshelveViewModel}">
+    <Grid
+        commonView:MarginSetter.Margin="{StaticResource CommonMargin}"
+        commonView:MarginSetter.Orientation="Vertical">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition
+                Width="Auto"
+                MinWidth="150" />
+            <ColumnDefinition
+                Width="*"
+                MinWidth="300" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition
+                Height="Auto" />
+            <RowDefinition
+                Height="Auto" />
+            <RowDefinition
+                Height="Auto" />
+            <RowDefinition
+                Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Column="0"
+            Grid.Row="0"
+            Text="User" />
+        <TextBlock
+            Grid.Column="0"
+            Grid.Row="1"
+            Text="Shelveset name" />
+        <TextBlock
+            Grid.Column="0"
+            Grid.Row="2"
+            Text="Branch name" />
+        <StackPanel
+            commonView:MarginSetter.Margin="{StaticResource CommonMargin}"
+            Grid.Column="1"
+            Grid.Row="0">
+            <DockPanel
+                commonView:MarginSetter.Orientation="Horizontal"
+                commonView:MarginSetter.Margin="{StaticResource CommonMargin}">
+                <materialDesign:PackIcon
+                    Kind="SearchWeb" />
+                <TextBox
+                    behaviors:KeyboardFocusBehavior.On="{Binding RelativeSource={RelativeSource Self}, Mode=OneTime}"
+                    Text="{Binding UsersSearchPattern, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}" />
+            </DockPanel>
+            <ComboBox
+                ItemsSource="{Binding Users, Mode=OneTime}"
+                DisplayMemberPath="DisplayName"
+                SelectedValuePath="Code"
+                IsEditable="False"
+                SelectedItem="{Binding User, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, 
+    NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                <ComboBox.InputBindings>
+                    <KeyBinding
+                        Command="{Binding UnshelveCommand, Mode=OneTime}"
+                        Key="Enter" />
+                </ComboBox.InputBindings>
+            </ComboBox>
+        </StackPanel>
+
+        <ComboBox
+            Grid.Column="1"
+            Grid.Row="1"
+            ItemsSource="{Binding UserShelvesetNames, Mode=OneTime}"
+            IsEditable="True"
+            SelectedItem="{Binding ShelvesetName, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, 
+    NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+            <ComboBox.InputBindings>
+                <KeyBinding
+                    Command="{Binding UnshelveCommand, Mode=OneTime}"
+                    Key="Enter" />
+            </ComboBox.InputBindings>
+        </ComboBox>
+
+        <TextBox
+            Grid.Column="1"
+            Grid.Row="2"
+            Text="{Binding BranchName, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, 
+    NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+            <TextBox.InputBindings>
+                <KeyBinding
+                    Command="{Binding UnshelveCommand, Mode=OneTime}"
+                    Key="Enter" />
+            </TextBox.InputBindings>
+        </TextBox>
+        <StackPanel
+            Grid.Column="1"
+            Grid.Row="3"
+            Orientation="Horizontal"
+            HorizontalAlignment="Right"
+            commonView:MarginSetter.Margin="{StaticResource CommonMargin}">
+            <Button
+                IsDefault="True"
+                Width="100"
+                Command="{Binding UnshelveCommand, Mode=OneTime}"
+                Content="OK" />
+            <Button
+                IsCancel="True"
+                Command="{Binding CancelCommand, Mode=OneTime}"
+                Width="100"
+                Background="OrangeRed"
+                Content="Cancel" />
+        </StackPanel>
+    </Grid>
+</commonView:BaseControl>
