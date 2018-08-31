@@ -18,6 +18,18 @@ namespace GitTfsShell.ViewModel
     [UsedImplicitly]
     public sealed class UnshelveViewModel : IDisposable, IDataErrorInfo
     {
+        [CanBeNull]
+        private static string branchName;
+
+        [CanBeNull]
+        private static string shelvesetName;
+
+        [CanBeNull]
+        private static UserInfo user;
+
+        [CanBeNull]
+        private static string usersSearchPattern;
+
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
 
@@ -55,12 +67,6 @@ namespace GitTfsShell.ViewModel
 
         private bool _isLoading;
 
-        [CanBeNull]
-        private string _shelvesetName;
-
-        [CanBeNull]
-        private UserInfo _user;
-
         public UnshelveViewModel(
             [NotNull] string directoryPath,
             [NotNull] GitInfo gitInfo,
@@ -84,14 +90,28 @@ namespace GitTfsShell.ViewModel
             UnshelveCommand = new CorrelationCommand(Unshelve, () => CanExecute);
             CancelCommand = new CorrelationCommand(Cancel, () => !IsLoading);
 
+            if (User == null)
+            {
+                UsersSearchPattern = string.Empty; // sets current user
+            }
+
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
-            UsersSearchPattern = null;
             _messageHub.Publish(DialogType.Unshelve);
             _subscriptionTokens.Add(messageHub.Subscribe<TaskState>(OnTaskAction));
         }
 
+        [NotNull]
+        public static ObservableCollection<UserInfo> Users { get; } = new ObservableCollection<UserInfo>();
+
+        [NotNull]
+        public static ObservableCollection<string> UserShelvesetNames { get; } = new ObservableCollection<string>();
+
         [CanBeNull]
-        public string BranchName { get; set; }
+        public string BranchName
+        {
+            get => branchName;
+            set => branchName = value;
+        }
 
         [NotNull]
         public IRefreshableCommand CancelCommand { get; }
@@ -101,11 +121,20 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string ShelvesetName
         {
-            get => _shelvesetName;
+            get => shelvesetName;
             set
             {
-                _shelvesetName = value;
-                BranchName = value?.Split(' ').FirstOrDefault();
+                shelvesetName = value;
+                string prefix = null;
+                if (User != null && User.Code != _tfsUtility.GetCurrentUser())
+                {
+                    prefix = User.Name + "_";
+                }
+
+                var branchName = prefix + value?.Split(' ').FirstOrDefault();
+                branchName = branchName.Replace(" ", "_").Replace("/", "_");
+
+                BranchName = branchName;
             }
         }
 
@@ -115,10 +144,10 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public UserInfo User
         {
-            get => _user;
+            get => user;
             set
             {
-                _user = value;
+                user = value;
                 if (value == null)
                 {
                     return;
@@ -135,16 +164,14 @@ namespace GitTfsShell.ViewModel
             }
         }
 
-        [NotNull]
-        public ObservableCollection<UserInfo> Users { get; } = new ObservableCollection<UserInfo>();
-
-        [NotNull]
-        public ObservableCollection<string> UserShelvesetNames { get; } = new ObservableCollection<string>();
-
+        [CanBeNull]
         public string UsersSearchPattern
         {
+            get => usersSearchPattern;
+
             set
             {
+                usersSearchPattern = value;
                 var text = value;
                 if (string.IsNullOrWhiteSpace(text))
                 {
@@ -153,9 +180,9 @@ namespace GitTfsShell.ViewModel
 
                 var users = _tfsUtility.GetUsers(text);
                 Users.Clear();
-                foreach (var user in users)
+                foreach (var currentUser in users)
                 {
-                    Users.Add(user);
+                    Users.Add(currentUser);
                 }
 
                 User = users.FirstOrDefault();
@@ -271,37 +298,37 @@ namespace GitTfsShell.ViewModel
                     async cancellationToken =>
                     {
                         BranchName = BranchName?.Replace(" ", "_");
-                        var branchName = BranchName;
-                        var shelvesetName = ShelvesetName;
+                        var currentBranchName = BranchName;
+                        var currentShelvesetName = ShelvesetName;
 
-                        var shelvesetExists = _tfsUtility.ShelvesetExists(null, shelvesetName ?? throw new InvalidOperationException());
+                        var shelvesetExists = _tfsUtility.ShelvesetExists(null, currentShelvesetName ?? throw new InvalidOperationException());
                         if (!shelvesetExists)
                         {
                             MessageBox.Show(
-                                $"Shelveset {shelvesetName} does not exist. Please select an existing one",
+                                $"Shelveset {currentShelvesetName} does not exist. Please select an existing one",
                                 "Shelveset does not exist",
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Warning);
                             return;
                         }
 
-                        var branchExists = _gitUtility.BranchExists(_gitInfo, branchName ?? throw new InvalidOperationException());
+                        var branchExists = _gitUtility.BranchExists(_gitInfo, currentBranchName ?? throw new InvalidOperationException());
                         if (branchExists)
                         {
-                            WarnBranchExists(branchName);
+                            WarnBranchExists(currentBranchName);
                             return;
                         }
 
                         if (User != null)
                         {
-                            _messageHub.Publish(new ShelvesetData(shelvesetName, User.Code));
+                            _messageHub.Publish(new ShelvesetData(currentShelvesetName, User.Code));
                         }
 
                         _messageHub.Publish(DialogType.None);
 
-                        await _gitTfsUtility.UnshelveAsync(_tfsInfo, _directoryPath, shelvesetName, branchName, User?.Code, cancellationToken).ConfigureAwait(false);
+                        await _gitTfsUtility.UnshelveAsync(_tfsInfo, _directoryPath, currentShelvesetName, currentBranchName, User?.Code, cancellationToken).ConfigureAwait(false);
 
-                        _gitUtility.CheckoutBranch(_gitInfo, branchName);
+                        _gitUtility.CheckoutBranch(_gitInfo, currentBranchName);
                         _messageHub.Publish(await _gitUtility.GetInfoAsync(_directoryPath).ConfigureAwait(false));
                     })
                 .ConfigureAwait(false);

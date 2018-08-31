@@ -57,7 +57,7 @@
                     Kind="SearchWeb" />
                 <TextBox
                     behaviors:KeyboardFocusBehavior.On="{Binding RelativeSource={RelativeSource Self}, Mode=OneTime}"
-                    Text="{Binding UsersSearchPattern, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}" />
+                    Text="{Binding UsersSearchPattern, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
             </DockPanel>
             <ComboBox
                 ItemsSource="{Binding Users, Mode=OneTime}"
