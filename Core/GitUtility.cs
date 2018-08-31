@@ -151,12 +151,22 @@ namespace GitTfsShell.Core
                         var repo = new Repository(directoryPath);
                         var status = repo.RetrieveStatus();
                         var isDirty = status.IsDirty;
-                        var uncommittedFilesCount = status.Added.Count() + status.Modified.Count() + status.Removed.Count();
                         var branchName = repo.Head.FriendlyName;
-                        var commitMessages = GetCommitMessagesFromBranchAsync(repo.Head, repo).ToArray();
+                        var uncommittedFilesCount = 0;
+                        string[] commitMessages;
+                        if (repo.Head.CanonicalName != "master")
+                        {
+                            _logger.Trace("Calculating commits count...");
+                            uncommittedFilesCount = status.Added.Count() + status.Modified.Count() + status.Removed.Count();
+                            _logger.Trace("Getting commits messages...");
+                            commitMessages = GetCommitMessagesFromBranchAsync(repo.Head, repo).Distinct().ToArray();
+                            _logger.Debug("Got commit messages and count");
+                        }
+                        else
+                        {
+                            commitMessages = new string[0];
+                        }
 
-                        // if (repo.Head.CanonicalName != "master")
-                        // {
                         // var master = repo.Branches["master"];
                         // var nonMergeCommits = GetCommitsDiff(repo, master)
                         // .Where(x => x.Parents.Count() == 1)
@@ -178,7 +188,7 @@ namespace GitTfsShell.Core
                         // BeautifyMessage(repo.Head.Tip.Message)
                         // };
                         // }
-                        var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branchName, uncommittedFilesCount, isDirty, commitMessages.Length);
+                        var gitInfo = new GitInfo(repo, commitMessages, branchName, uncommittedFilesCount, isDirty, commitMessages.Length);
                         _logger.Debug("Got Git info");
                         return gitInfo;
                     })

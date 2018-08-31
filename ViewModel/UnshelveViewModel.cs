@@ -19,16 +19,16 @@ namespace GitTfsShell.ViewModel
     public sealed class UnshelveViewModel : IDisposable, IDataErrorInfo
     {
         [CanBeNull]
-        private static string branchName;
+        private static string currentBranchName;
 
         [CanBeNull]
-        private static string shelvesetName;
+        private static string currentShelvesetName;
 
         [CanBeNull]
-        private static UserInfo user;
+        private static UserInfo currentUser;
 
         [CanBeNull]
-        private static string usersSearchPattern;
+        private static string currentUsersSearchPattern;
 
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
@@ -109,8 +109,8 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string BranchName
         {
-            get => branchName;
-            set => branchName = value;
+            get => currentBranchName;
+            set => currentBranchName = value;
         }
 
         [NotNull]
@@ -121,17 +121,17 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string ShelvesetName
         {
-            get => shelvesetName;
+            get => currentShelvesetName;
             set
             {
-                shelvesetName = value;
+                currentShelvesetName = value;
                 string prefix = null;
                 if (User != null && User.Code != _tfsUtility.GetCurrentUser())
                 {
                     prefix = User.Name + "_";
                 }
 
-                var branchName = prefix + value?.Split(' ').FirstOrDefault();
+                var branchName = prefix + value;
                 branchName = branchName.Replace(" ", "_").Replace("/", "_");
 
                 BranchName = branchName;
@@ -144,10 +144,10 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public UserInfo User
         {
-            get => user;
+            get => currentUser;
             set
             {
-                user = value;
+                currentUser = value;
                 if (value == null)
                 {
                     return;
@@ -167,11 +167,11 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string UsersSearchPattern
         {
-            get => usersSearchPattern;
+            get => currentUsersSearchPattern;
 
             set
             {
-                usersSearchPattern = value;
+                currentUsersSearchPattern = value;
                 var text = value;
                 if (string.IsNullOrWhiteSpace(text))
                 {
@@ -180,9 +180,9 @@ namespace GitTfsShell.ViewModel
 
                 var users = _tfsUtility.GetUsers(text);
                 Users.Clear();
-                foreach (var currentUser in users)
+                foreach (var user in users)
                 {
-                    Users.Add(currentUser);
+                    Users.Add(user);
                 }
 
                 User = users.FirstOrDefault();
@@ -298,37 +298,37 @@ namespace GitTfsShell.ViewModel
                     async cancellationToken =>
                     {
                         BranchName = BranchName?.Replace(" ", "_");
-                        var currentBranchName = BranchName;
-                        var currentShelvesetName = ShelvesetName;
+                        var branchName = BranchName;
+                        var shelvesetName = ShelvesetName;
 
-                        var shelvesetExists = _tfsUtility.ShelvesetExists(null, currentShelvesetName ?? throw new InvalidOperationException());
+                        var shelvesetExists = _tfsUtility.ShelvesetExists(null, shelvesetName ?? throw new InvalidOperationException());
                         if (!shelvesetExists)
                         {
                             MessageBox.Show(
-                                $"Shelveset {currentShelvesetName} does not exist. Please select an existing one",
+                                $"Shelveset {shelvesetName} does not exist. Please select an existing one",
                                 "Shelveset does not exist",
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Warning);
                             return;
                         }
 
-                        var branchExists = _gitUtility.BranchExists(_gitInfo, currentBranchName ?? throw new InvalidOperationException());
+                        var branchExists = _gitUtility.BranchExists(_gitInfo, branchName ?? throw new InvalidOperationException());
                         if (branchExists)
                         {
-                            WarnBranchExists(currentBranchName);
+                            WarnBranchExists(branchName);
                             return;
                         }
 
                         if (User != null)
                         {
-                            _messageHub.Publish(new ShelvesetData(currentShelvesetName, User.Code));
+                            _messageHub.Publish(new ShelvesetData(shelvesetName, User.Code));
                         }
 
                         _messageHub.Publish(DialogType.None);
 
-                        await _gitTfsUtility.UnshelveAsync(_tfsInfo, _directoryPath, currentShelvesetName, currentBranchName, User?.Code, cancellationToken).ConfigureAwait(false);
+                        await _gitTfsUtility.UnshelveAsync(_tfsInfo, _directoryPath, shelvesetName, branchName, User?.Code, cancellationToken).ConfigureAwait(false);
 
-                        _gitUtility.CheckoutBranch(_gitInfo, currentBranchName);
+                        _gitUtility.CheckoutBranch(_gitInfo, branchName);
                         _messageHub.Publish(await _gitUtility.GetInfoAsync(_directoryPath).ConfigureAwait(false));
                     })
                 .ConfigureAwait(false);
