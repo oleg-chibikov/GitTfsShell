@@ -31,15 +31,8 @@ namespace GitTfsShell.Core
 
         public async Task ExecuteCommandAsync(string executable, string command, string directoryPath, CancellationToken cancellationToken)
         {
-            if (executable == null)
-            {
-                throw new ArgumentNullException(nameof(executable));
-            }
-
-            if (command == null)
-            {
-                throw new ArgumentNullException(nameof(command));
-            }
+            _ = executable ?? throw new ArgumentNullException(nameof(executable));
+            _ = command ?? throw new ArgumentNullException(nameof(command));
 
             _messageHub.Publish($"Executing '{executable}' '{command}'...".ToMessage());
             var result = await _processUtility.ExecuteCommandAsync(executable, command, cancellationToken, workingDirectory: directoryPath).ConfigureAwait(false);
@@ -53,6 +46,8 @@ namespace GitTfsShell.Core
 
         public async Task ExecuteTaskAsync(Func<CancellationToken, Task> action, bool notifySuccess)
         {
+            _ = action ?? throw new ArgumentNullException(nameof(action));
+
             await _cancellationTokenSourceProvider.ExecuteAsyncOperation(
                     async cancellationToken => await Task.Run(
                             async () =>

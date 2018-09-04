@@ -20,6 +20,6 @@ namespace GitTfsShell.Core
         [NotNull]
         Task<GitInfo> GetInfoAsync([NotNull] string directoryPath);
 
-        void StageChanges([NotNull] GitInfo repo);
+        void StageChanges([NotNull] GitInfo gitInfo);
     }
 }

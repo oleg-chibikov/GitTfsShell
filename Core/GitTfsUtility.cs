@@ -35,20 +35,8 @@ namespace GitTfsShell.Core
 
         public async Task CloneAsync(TfsInfo tfsInfo, string directoryPath, CancellationToken cancellationToken)
         {
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
-
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
-
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             _messageHub.Publish("Creating temp directory...");
             var tempDirectoryPath = CreateTempRepoDirectory(directoryPath);
@@ -93,40 +81,18 @@ namespace GitTfsShell.Core
 
         public async Task PullAsync(TfsInfo tfsInfo, string directoryPath, CancellationToken cancellationToken)
         {
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
-
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             await _tfsUtility.ExecuteWithDisabledWorkspace(tfsInfo, GitTfsPath, "pull", directoryPath, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task ShelveAsync(TfsInfo tfsInfo, string directoryPath, string shelvesetName, string comment, CancellationToken cancellationToken)
         {
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
-
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
-
-            if (shelvesetName == null)
-            {
-                throw new ArgumentNullException(nameof(shelvesetName));
-            }
-
-            if (comment == null)
-            {
-                throw new ArgumentNullException(nameof(comment));
-            }
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
+            _ = shelvesetName ?? throw new ArgumentNullException(nameof(shelvesetName));
+            _ = comment ?? throw new ArgumentNullException(nameof(comment));
 
             await _tfsUtility.ExecuteWithDisabledWorkspace(tfsInfo, GitTfsPath, $"shelve \"{shelvesetName}\" --force --comment \"{comment}\"", directoryPath, cancellationToken)
                 .ConfigureAwait(false);
@@ -134,25 +100,10 @@ namespace GitTfsShell.Core
 
         public async Task UnshelveAsync(TfsInfo tfsInfo, string directoryPath, string shelvesetName, string branchName, string user, CancellationToken cancellationToken)
         {
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
-
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
-
-            if (shelvesetName == null)
-            {
-                throw new ArgumentNullException(nameof(shelvesetName));
-            }
-
-            if (branchName == null)
-            {
-                throw new ArgumentNullException(nameof(branchName));
-            }
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
+            _ = shelvesetName ?? throw new ArgumentNullException(nameof(shelvesetName));
+            _ = branchName ?? throw new ArgumentNullException(nameof(branchName));
 
             var userParam = user == null ? null : $" -u={user}";
             await _tfsUtility.ExecuteWithDisabledWorkspace(

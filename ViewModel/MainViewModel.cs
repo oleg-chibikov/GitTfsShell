@@ -299,6 +299,7 @@ namespace GitTfsShell.ViewModel
 
         private void OnNewMessage([NotNull] Message message)
         {
+            _ = message ?? throw new ArgumentNullException(nameof(message));
             if (message.Exception == null)
             {
                 _synchronizationContext.Send(x => Logs.Add(message), null);
@@ -307,11 +308,7 @@ namespace GitTfsShell.ViewModel
 
         private void OnShelvesetEvent([NotNull] ShelvesetData data)
         {
-            if (data == null)
-            {
-                throw new ArgumentNullException(nameof(data));
-            }
-
+            _ = data ?? throw new ArgumentNullException(nameof(data));
             CreatedShelvesetName = data.Name;
             CreatedShelvesetUrl = Settings.Default.TfsUri + "_versionControl/shelveset?ss=" + _tfsUtility.GetShelvesetQualifiedName(data.User, data.Name);
         }

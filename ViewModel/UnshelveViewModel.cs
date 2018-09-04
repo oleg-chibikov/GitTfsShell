@@ -86,6 +86,7 @@ namespace GitTfsShell.ViewModel
             _synchronizationContext = synchronizationContext ?? throw new ArgumentNullException(nameof(synchronizationContext));
             _gitInfo = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             UnshelveCommand = new CorrelationCommand(Unshelve, () => CanExecute);
             CancelCommand = new CorrelationCommand(Cancel, () => !IsLoading);
@@ -95,7 +96,6 @@ namespace GitTfsShell.ViewModel
                 UsersSearchPattern = string.Empty; // sets current user
             }
 
-            _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
             _messageHub.Publish(DialogType.Unshelve);
             _subscriptionTokens.Add(messageHub.Subscribe<TaskState>(OnTaskAction));
         }

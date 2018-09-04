@@ -28,15 +28,8 @@ namespace GitTfsShell.Core
 
         public void AddCommentToExistingCommit(GitInfo gitInfo, string message)
         {
-            if (gitInfo == null)
-            {
-                throw new ArgumentNullException(nameof(gitInfo));
-            }
-
-            if (message == null)
-            {
-                throw new ArgumentNullException(nameof(message));
-            }
+            _ = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
+            _ = message ?? throw new ArgumentNullException(nameof(message));
 
             _messageHub.Publish($"Adding {message} to the commit message...".ToMessage());
             var lastCommit = gitInfo.Repo.Head.Tip;
@@ -83,15 +76,8 @@ namespace GitTfsShell.Core
 
         public bool BranchExists(GitInfo gitInfo, string branchName)
         {
-            if (gitInfo == null)
-            {
-                throw new ArgumentNullException(nameof(gitInfo));
-            }
-
-            if (branchName == null)
-            {
-                throw new ArgumentNullException(nameof(branchName));
-            }
+            _ = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
+            _ = branchName ?? throw new ArgumentNullException(nameof(branchName));
 
             _logger.TraceFormat("Checking branch {0} exists...", branchName);
             var branchExists = gitInfo.Repo.Branches.Any(x => x.FriendlyName == branchName);
@@ -101,15 +87,8 @@ namespace GitTfsShell.Core
 
         public Branch CheckoutBranch(GitInfo gitInfo, string branchName)
         {
-            if (gitInfo == null)
-            {
-                throw new ArgumentNullException(nameof(gitInfo));
-            }
-
-            if (branchName == null)
-            {
-                throw new ArgumentNullException(nameof(branchName));
-            }
+            _ = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
+            _ = branchName ?? throw new ArgumentNullException(nameof(branchName));
 
             _messageHub.Publish($"Checking branch {branchName} out...".ToMessage());
             var branch = gitInfo.Repo.Branches[branchName];
@@ -120,15 +99,8 @@ namespace GitTfsShell.Core
 
         public void CommitChanges(GitInfo gitInfo, string message)
         {
-            if (gitInfo == null)
-            {
-                throw new ArgumentNullException(nameof(gitInfo));
-            }
-
-            if (message == null)
-            {
-                throw new ArgumentNullException(nameof(message));
-            }
+            _ = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
+            _ = message ?? throw new ArgumentNullException(nameof(message));
 
             _messageHub.Publish("Committing changes...".ToMessage());
             var signature = gitInfo.Repo.Config.BuildSignature(DateTimeOffset.Now);
@@ -138,6 +110,8 @@ namespace GitTfsShell.Core
 
         public async Task<GitInfo> GetInfoAsync(string directoryPath)
         {
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
+
             return await Task.Run(
                     () =>
                     {
@@ -195,15 +169,12 @@ namespace GitTfsShell.Core
                 .ConfigureAwait(false);
         }
 
-        public void StageChanges(GitInfo repo)
+        public void StageChanges(GitInfo gitInfo)
         {
-            if (repo == null)
-            {
-                throw new ArgumentNullException(nameof(repo));
-            }
+            _ = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
 
             _messageHub.Publish("Staging changes...".ToMessage());
-            Commands.Stage(repo.Repo, "*");
+            Commands.Stage(gitInfo.Repo, "*");
             _messageHub.Publish("Changes are staged".ToSuccess());
         }
 

@@ -77,11 +77,11 @@ namespace GitTfsShell.ViewModel
             _synchronizationContext = synchronizationContext ?? throw new ArgumentNullException(nameof(synchronizationContext));
             _gitInfo = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             ShelveCommand = new CorrelationCommand(Shelve, () => CanExecute);
             CancelCommand = new CorrelationCommand(Cancel, () => !IsLoading);
 
-            _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
             IsDirty = CommitDirty = _gitInfo.IsDirty;
             ShelvesetName = GetShelvesetName();
             CommitMessage = _gitInfo.CommitMessage ?? string.Empty;

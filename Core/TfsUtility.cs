@@ -52,25 +52,10 @@ namespace GitTfsShell.Core
 
         public async Task ExecuteWithDisabledWorkspace(TfsInfo tfsInfo, string executable, string command, string directoryPath, CancellationToken cancellationToken)
         {
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
-
-            if (executable == null)
-            {
-                throw new ArgumentNullException(nameof(executable));
-            }
-
-            if (command == null)
-            {
-                throw new ArgumentNullException(nameof(command));
-            }
-
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _ = executable ?? throw new ArgumentNullException(nameof(executable));
+            _ = command ?? throw new ArgumentNullException(nameof(command));
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             var mapping = new WorkingFolder(tfsInfo.MappedServerFolder, directoryPath);
 
@@ -95,10 +80,7 @@ namespace GitTfsShell.Core
 
         public async Task<TfsInfo> GetInfoAsync(string directoryPath)
         {
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             return await Task.Run(
                     () =>
@@ -123,10 +105,7 @@ namespace GitTfsShell.Core
 
         public void GetLatest(TfsInfo tfsInfo)
         {
-            if (tfsInfo == null)
-            {
-                throw new ArgumentNullException(nameof(tfsInfo));
-            }
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
 
             _messageHub.Publish("Getting TFS latest version...".ToMessage());
 
@@ -138,10 +117,7 @@ namespace GitTfsShell.Core
 
         public string GetShelvesetQualifiedName(string user, string shelvesetName)
         {
-            if (shelvesetName == null)
-            {
-                throw new ArgumentNullException(nameof(shelvesetName));
-            }
+            _ = shelvesetName ?? throw new ArgumentNullException(nameof(shelvesetName));
 
             _logger.TraceFormat("Getting shelveset qualified name for {0}...", shelvesetName);
             var shelveset = _versionControlServer.QueryShelvesets(shelvesetName, user).SingleOrDefault();
@@ -160,6 +136,8 @@ namespace GitTfsShell.Core
 
         public ICollection<UserInfo> GetUsers(string searchPattern)
         {
+            _ = searchPattern ?? throw new ArgumentNullException(nameof(searchPattern));
+
             _logger.TraceFormat("Getting users by {0}...", searchPattern);
             var users = _users.Where(
                     x => x.Name.IndexOf(searchPattern, StringComparison.OrdinalIgnoreCase) != -1 || x.Code.IndexOf(searchPattern, StringComparison.OrdinalIgnoreCase) != -1)
@@ -170,10 +148,7 @@ namespace GitTfsShell.Core
 
         public bool ShelvesetExists(string user, string shelvesetName)
         {
-            if (shelvesetName == null)
-            {
-                throw new ArgumentNullException(nameof(shelvesetName));
-            }
+            _ = shelvesetName ?? throw new ArgumentNullException(nameof(shelvesetName));
 
             _logger.TraceFormat("Checking that shelveset {0} exists...", shelvesetName);
             var exists = _versionControlServer.QueryShelvesets(shelvesetName, user).Any();
