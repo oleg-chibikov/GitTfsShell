@@ -1,4 +1,4 @@
-<commonView:BaseWindow
+<baseWindow:BaseWindow
     x:Class="GitTfsShell.View.MainWindow"
     x:ClassModifier="internal"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,6 +12,7 @@
     xmlns:behaviors="clr-namespace:Scar.Common.WPF.Controls.Behaviors;assembly=Scar.Common.WPF.Controls.Behaviors"
     xmlns:controls="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock"
     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+    xmlns:baseWindow="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View.BaseWindow"
     Icon="../icon.ico"
     mc:Ignorable="d"
     MinWidth="800"
@@ -26,7 +27,7 @@
                 Command="{Binding WindowClosingCommand, Mode=OneTime}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <commonView:BaseWindow.Resources>
+    <baseWindow:BaseWindow.Resources>
         <Style
             x:Key="TypedValueHelper"
             TargetType="{x:Type ContentControl}">
@@ -59,7 +60,7 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-    </commonView:BaseWindow.Resources>
+    </baseWindow:BaseWindow.Resources>
     <materialDesign:DialogHost
         IsOpen="{Binding IsDialogOpen, Mode=OneWay}">
         <materialDesign:DialogHost.DialogContent>
@@ -200,4 +201,4 @@
             </DockPanel>
         </StackPanel>
     </materialDesign:DialogHost>
-</commonView:BaseWindow>
+</baseWindow:BaseWindow>

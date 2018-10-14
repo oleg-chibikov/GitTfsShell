@@ -116,8 +116,6 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         public IRefreshableCommand CancelCommand { get; }
 
-        public string Error => throw new NotSupportedException();
-
         [CanBeNull]
         public string ShelvesetName
         {
@@ -211,6 +209,8 @@ namespace GitTfsShell.ViewModel
                 CancelCommand.RaiseCanExecuteChanged();
             }
         }
+
+        public string Error => throw new NotSupportedException();
 
         [CanBeNull]
         public string this[[NotNull] string columnName]

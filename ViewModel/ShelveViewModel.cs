@@ -79,7 +79,7 @@ namespace GitTfsShell.ViewModel
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
-            ShelveCommand = new CorrelationCommand(Shelve, () => CanExecute);
+            ShelveOrCheckinCommand = new CorrelationCommand(ShelveOrCheckin, () => CanExecute);
             CancelCommand = new CorrelationCommand(Cancel, () => !IsLoading);
 
             IsDirty = CommitDirty = _gitInfo.IsDirty;
@@ -109,6 +109,11 @@ namespace GitTfsShell.ViewModel
             }
         }
 
+        public bool CheckinInsteadOfShelving { get; set; }
+
+        [DependsOn(nameof(CheckinInsteadOfShelving))]
+        public bool IsShelvesetNameVisible => !CheckinInsteadOfShelving;
+
         [NotNull]
         public string CommitMessage { get; set; }
 
@@ -120,7 +125,7 @@ namespace GitTfsShell.ViewModel
         public bool IsDirty { get; }
 
         [NotNull]
-        public IRefreshableCommand ShelveCommand { get; }
+        public IRefreshableCommand ShelveOrCheckinCommand { get; }
 
         [NotNull]
         public string ShelvesetName { get; set; }
@@ -133,7 +138,7 @@ namespace GitTfsShell.ViewModel
             set
             {
                 _hasValidationErrors = value;
-                ShelveCommand.RaiseCanExecuteChanged();
+                ShelveOrCheckinCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -143,7 +148,7 @@ namespace GitTfsShell.ViewModel
             set
             {
                 _isLoading = value;
-                ShelveCommand.RaiseCanExecuteChanged();
+                ShelveOrCheckinCommand.RaiseCanExecuteChanged();
                 CancelCommand.RaiseCanExecuteChanged();
             }
         }
@@ -157,7 +162,7 @@ namespace GitTfsShell.ViewModel
                 switch (columnName)
                 {
                     case nameof(ShelvesetName):
-                        if (string.IsNullOrWhiteSpace(ShelvesetName))
+                        if (!CheckinInsteadOfShelving && string.IsNullOrWhiteSpace(ShelvesetName))
                         {
                             errorMsg = "ShelvesetName is required";
                         }
@@ -240,7 +245,7 @@ namespace GitTfsShell.ViewModel
             }
         }
 
-        private async void Shelve()
+        private async void ShelveOrCheckin()
         {
             if (!CanExecute)
             {
@@ -280,8 +285,17 @@ namespace GitTfsShell.ViewModel
                             _gitUtility.CommitChanges(_gitInfo, commitMessage);
                         }
 
-                        await _gitTfsUtility.ShelveAsync(_tfsInfo, _directoryPath, shelvesetName, commitMessage, cancellationToken).ConfigureAwait(false);
-                        _gitUtility.AddCommentToExistingCommit(_gitInfo, shelvesetName);
+                        if (!CheckinInsteadOfShelving)
+                        {
+                            await _gitTfsUtility.ShelveAsync(_tfsInfo, _directoryPath, shelvesetName, commitMessage, cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await _gitTfsUtility.CheckinAsync(_tfsInfo, _directoryPath, commitMessage, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        _gitUtility.AddCommentToExistingCommit(_gitInfo, CheckinInsteadOfShelving ? "Check-in" : shelvesetName);
+
                         _messageHub.Publish(await _gitUtility.GetInfoAsync(_directoryPath).ConfigureAwait(false));
                         _messageHub.Publish(new ShelvesetData(shelvesetName, user));
                     })

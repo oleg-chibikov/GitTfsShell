@@ -98,6 +98,16 @@ namespace GitTfsShell.Core
                 .ConfigureAwait(false);
         }
 
+        public async Task CheckinAsync(TfsInfo tfsInfo, string directoryPath, string comment, CancellationToken cancellationToken)
+        {
+            _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
+            _ = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
+            _ = comment ?? throw new ArgumentNullException(nameof(comment));
+
+            await _tfsUtility.ExecuteWithDisabledWorkspace(tfsInfo, GitTfsPath, $"checkin --force --comment=\"{comment}\"", directoryPath, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         public async Task UnshelveAsync(TfsInfo tfsInfo, string directoryPath, string shelvesetName, string branchName, string user, CancellationToken cancellationToken)
         {
             _ = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));

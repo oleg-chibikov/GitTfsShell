@@ -12,6 +12,7 @@ using Microsoft.TeamFoundation.VersionControl.Client;
 using Scar.Common.Async;
 using Scar.Common.Messages;
 using Scar.Common.Processes;
+using Scar.Common.WPF.Startup;
 
 namespace GitTfsShell
 {
@@ -24,6 +25,8 @@ namespace GitTfsShell
         {
             _tfs = new TfsTeamProjectCollection(new Uri(Settings.Default.TfsUri));
         }
+
+        protected override NewInstanceHandling NewInstanceHandling => NewInstanceHandling.AllowMultiple;
 
         protected override void OnExit(ExitEventArgs e)
         {
