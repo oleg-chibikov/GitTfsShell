@@ -120,8 +120,6 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         public ICollection<string> CommitMessages { get; }
 
-        public string Error => throw new NotSupportedException();
-
         public bool IsDirty { get; }
 
         [NotNull]
@@ -152,6 +150,8 @@ namespace GitTfsShell.ViewModel
                 CancelCommand.RaiseCanExecuteChanged();
             }
         }
+
+        public string Error => throw new NotSupportedException();
 
         [CanBeNull]
         public string this[[NotNull] string columnName]
