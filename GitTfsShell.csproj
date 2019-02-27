@@ -85,6 +85,9 @@
     <Compile Include="ViewModel\ShelveViewModel.cs" />
     <Compile Include="View\ExternalBrowserHyperlink.cs" />
     <Compile Include="View\Converters\DialogTypeToHeaderConverter.cs" />
+    <Compile Include="View\GenericDialogControl.xaml.cs">
+      <DependentUpon>GenericDialogControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\TfsInfoControl.xaml.cs">
       <DependentUpon>TfsInfoControl.xaml</DependentUpon>
     </Compile>
@@ -97,6 +100,10 @@
     <Compile Include="View\UnshelveControl.xaml.cs">
       <DependentUpon>UnshelveControl.xaml</DependentUpon>
     </Compile>
+    <Page Include="View\GenericDialogControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\TfsInfoControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -147,6 +154,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </Content>
+    <Resource Include="Fonts\Champagne &amp; Limousines.ttf" />
+    <Resource Include="Fonts\Amaranth-Regular.otf" />
+    <Resource Include="Fonts\Amiko-Regular.ttf" />
+    <Resource Include="Fonts\Azonix.otf" />
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -259,6 +270,9 @@
     <Reference Include="Scar.Common.WPF.View, Version=1.0.6812.21943, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Scar.Common.WPF.View.1.0.6812.21943\lib\net47\Scar.Common.WPF.View.dll</HintPath>
     </Reference>
+    <Reference Include="Scar.Common.WPF.View.AnimatedWindow, Version=1.0.6995.36992, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Scar.Common.WPF.View.AnimatedWindow.1.0.6995.36992\lib\net47\Scar.Common.WPF.View.AnimatedWindow.dll</HintPath>
+    </Reference>
     <Reference Include="Scar.Common.WPF.View.BaseWindow, Version=1.0.6812.22025, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Scar.Common.WPF.View.BaseWindow.1.0.6812.22025\lib\net47\Scar.Common.WPF.View.BaseWindow.dll</HintPath>
     </Reference>
@@ -292,6 +306,7 @@
       <HintPath>packages\XAMLMarkupExtensions.1.6.0\lib\net452\XAMLMarkupExtensions.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(ProjectDir)gittfs\*.*" "$(TargetDir)gittfs" /Y /I /E</PostBuildEvent>

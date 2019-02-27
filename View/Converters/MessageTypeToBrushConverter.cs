@@ -13,7 +13,7 @@ namespace GitTfsShell.View.Converters
         {
             if (!(value is MessageType))
             {
-                return Brushes.Black;
+                return Brushes.White;
             }
 
             switch ((MessageType)value)
@@ -21,7 +21,7 @@ namespace GitTfsShell.View.Converters
                 case MessageType.Success:
                     return Brushes.ForestGreen;
                 case MessageType.Message:
-                    return Brushes.Black;
+                    return Brushes.White;
                 case MessageType.Warning:
                     return Brushes.Orange;
                 case MessageType.Error:

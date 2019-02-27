@@ -6,7 +6,47 @@
     mc:Ignorable="d"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    xmlns:converters="clr-namespace:GitTfsShell.View.Converters">
+    xmlns:converters="clr-namespace:GitTfsShell.View.Converters"
+    xmlns:commonView="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View"
+    xmlns:controls="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock">
+
+    <Brush
+        x:Key="Background">
+        #FF464646
+    </Brush>
+
+    <Brush
+        x:Key="DarkerBackground">
+        #FF363636
+    </Brush>
+
+    <Brush
+        x:Key="Foreground">
+        White
+    </Brush>
+
+    <FontFamily
+        x:Key="FontHeader">
+        ../Fonts/#Azonix
+        <!--../Fonts/#Champagne &amp; Limousines-->
+    </FontFamily>
+
+    <Style
+        x:Key="Control"
+        TargetType="{x:Type commonView:BaseControl}">
+        <Setter
+            Property="Foreground"
+            Value="{StaticResource Foreground}" />
+        <Setter
+            Property="Background"
+            Value="{StaticResource Background}" />
+        <Setter
+            Property="BorderThickness"
+            Value="0" />
+        <Setter
+            Property="BorderBrush"
+            Value="Transparent" />
+    </Style>
 
     <system:Double
         x:Key="CommonMargin">
@@ -18,28 +58,24 @@
     </system:Double>
     <system:Double
         x:Key="HugeFontSize">
-        24
-    </system:Double>
-    <system:Double
-        x:Key="BigFontSize">
         20
     </system:Double>
     <system:Double
-        x:Key="MediumFontSize">
+        x:Key="BigFontSize">
         16
     </system:Double>
     <system:Double
-        x:Key="SmallFontSize">
-        14
+        x:Key="MediumFontSize">
+        12
     </system:Double>
-
-    <Style
-        TargetType="Button"
-        BasedOn="{StaticResource {x:Type Button}}">
-        <Setter
-            Property="VerticalAlignment"
-            Value="Center" />
-    </Style>
+    <system:Double
+        x:Key="SmallFontSize">
+        11
+    </system:Double>
+    <system:Double
+        x:Key="TinyFontSize">
+        10
+    </system:Double>
 
     <Style
         TargetType="materialDesign:PackIcon"
@@ -55,11 +91,34 @@
             Value="0" />
     </Style>
 
+    <Style
+        TargetType="Button"
+        BasedOn="{StaticResource {x:Type Button}}">
+        <Setter
+            Property="VerticalAlignment"
+            Value="Center" />
+        <Setter
+            Property="Padding"
+            Value="10 0" />
+        <Setter
+            Property="BorderThickness"
+            Value="0" />
+        <Setter
+            Property="BorderBrush"
+            Value="Transparent" />
+        <Setter
+            Property="TextBlock.FontFamily"
+            Value="{StaticResource FontHeader}" />
+    </Style>
+
     <!-- ReSharper disable once Xaml.StaticResourceNotResolved -->
     <Style
         TargetType="Button"
         x:Key="ImageButton"
         BasedOn="{StaticResource MaterialDesignRaisedButton}">
+        <Setter
+            Property="VerticalAlignment"
+            Value="Center" />
         <Setter
             Property="Padding"
             Value="0" />
@@ -69,6 +128,18 @@
         <Setter
             Property="Height"
             Value="{StaticResource CommonButtonSize}" />
+        <Setter
+            Property="Background"
+            Value="Transparent" />
+        <Setter
+            Property="Foreground"
+            Value="{StaticResource Foreground}" />
+        <Setter
+            Property="BorderThickness"
+            Value="0" />
+        <Setter
+            Property="BorderBrush"
+            Value="Transparent" />
     </Style>
 
     <Style
@@ -77,6 +148,32 @@
         <Setter
             Property="VerticalAlignment"
             Value="Center" />
+        <Setter
+            Property="FontSize"
+            Value="{StaticResource MediumFontSize}" />
+    </Style>
+
+    <Style
+        x:Key="Header"
+        TargetType="TextBlock"
+        BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter
+            Property="FontFamily"
+            Value="{StaticResource FontHeader}" />
+        <Setter
+            Property="Padding"
+            Value="5" />
+        <Setter
+            Property="FontWeight"
+            Value="Bold" />
+        <Setter
+            Property="Background"
+            Value="{StaticResource DarkerBackground}" />
+    </Style>
+
+    <Style
+        TargetType="controls:SelectableTextBlock"
+        BasedOn="{StaticResource {x:Type TextBlock}}">
     </Style>
 
     <Style
@@ -85,6 +182,12 @@
         <Setter
             Property="VerticalAlignment"
             Value="Center" />
+        <Setter
+            Property="FontSize"
+            Value="{StaticResource MediumFontSize}" />
+        <Setter
+            Property="Foreground"
+            Value="{StaticResource Foreground}" />
         <Style.Triggers>
             <Trigger
                 Property="Validation.HasError"
@@ -97,8 +200,31 @@
     </Style>
 
     <Style
+        TargetType="ListBox"
+        BasedOn="{StaticResource {x:Type ListBox}}">
+        <Setter
+            Property="VerticalAlignment"
+            Value="Center" />
+        <Setter
+            Property="Foreground"
+            Value="{StaticResource Foreground}" />
+        <Setter
+            Property="Background"
+            Value="{StaticResource Background}" />
+    </Style>
+
+    <Style
         TargetType="ComboBox"
         BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter
+            Property="Foreground"
+            Value="{StaticResource Foreground}" />
+        <Setter
+            Property="Background"
+            Value="{StaticResource Background}" />
+        <Setter
+            Property="FontSize"
+            Value="{StaticResource MediumFontSize}" />
         <Setter
             Property="VerticalAlignment"
             Value="Center" />
@@ -112,6 +238,90 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <!--ScrollBar-->
+    <!--Scrollbar Thumbs-->
+    <Style x:Key="ScrollThumbs" TargetType="{x:Type Thumb}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Grid x:Name="Grid">
+                        <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto" Height="Auto" Fill="Transparent" />
+                        <Border x:Name="Rectangle1" CornerRadius="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto" Height="Auto"
+                                Background="{TemplateBinding Background}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="Horizontal">
+                            <Setter TargetName="Rectangle1" Property="Width" Value="Auto" />
+                            <Setter TargetName="Rectangle1" Property="Height" Value="7" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--ScrollBars-->
+    <Style x:Key="{x:Type ScrollBar}" TargetType="{x:Type ScrollBar}">
+        <Setter Property="Stylus.IsFlicksEnabled" Value="false" />
+        <Setter Property="Foreground" Value="{StaticResource Foreground}" />
+        <Setter Property="Background" Value="{StaticResource Background}" />
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                    <Grid x:Name="GridRoot" Width="8" Background="{TemplateBinding Background}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="0.00001*" />
+                        </Grid.RowDefinitions>
+
+                        <Track x:Name="PART_Track" Grid.Row="0" IsDirectionReversed="true" Focusable="false">
+                            <Track.Thumb>
+                                <Thumb x:Name="Thumb" Background="{TemplateBinding Foreground}" Style="{DynamicResource ScrollThumbs}" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton x:Name="PageUp" Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="false" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton x:Name="PageDown" Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="false" />
+                            </Track.DecreaseRepeatButton>
+                        </Track>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger SourceName="Thumb" Property="IsMouseOver" Value="true">
+                            <Setter Value="{DynamicResource ButtonSelectBrush}" TargetName="Thumb" Property="Background" />
+                        </Trigger>
+                        <Trigger SourceName="Thumb" Property="IsDragging" Value="true">
+                            <Setter Value="{DynamicResource DarkBrush}" TargetName="Thumb" Property="Background" />
+                        </Trigger>
+
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter TargetName="Thumb" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter TargetName="GridRoot" Property="LayoutTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="-90" />
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="PART_Track" Property="LayoutTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="-90" />
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Width" Value="Auto" />
+                            <Setter Property="Height" Value="8" />
+                            <Setter TargetName="Thumb" Property="Tag" Value="Horizontal" />
+                            <Setter TargetName="PageDown" Property="Command" Value="ScrollBar.PageLeftCommand" />
+                            <Setter TargetName="PageUp" Property="Command" Value="ScrollBar.PageRightCommand" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!--End ScrollBar-->
 
     <converters:MessageTypeToBrushConverter
         x:Key="MessageTypeToBrushConverter" />

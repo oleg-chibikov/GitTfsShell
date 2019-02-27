@@ -1,0 +1,58 @@
+<view:BaseControl
+    x:Class="GitTfsShell.View.GenericDialogControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:view="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View"
+    xmlns:view1="clr-namespace:GitTfsShell.View"
+    xmlns:viewModel="clr-namespace:GitTfsShell.ViewModel"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModel:MainViewModel}"
+    Style="{StaticResource Control}">
+    <view:BaseControl.Resources>
+        <Style
+            x:Key="TypedValueHelper"
+            TargetType="{x:Type ContentControl}">
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding Path=DialogType}"
+                    Value="Shelve">
+                    <Setter
+                        Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <view1:ShelveControl
+                                    DataContext="{Binding ShelveViewModel, Mode=OneWay}" />
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger
+                    Binding="{Binding Path=DialogType}"
+                    Value="Unshelve">
+                    <Setter
+                        Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <view1:UnshelveControl
+                                    DataContext="{Binding UnshelveViewModel, Mode=OneWay}" />
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </view:BaseControl.Resources>
+    <StackPanel
+        Margin="10"
+        Orientation="Vertical"
+        view:MarginSetter.Margin="{StaticResource CommonMargin}">
+        <TextBlock
+            Style="{StaticResource Header}"
+            Text="{Binding DialogType, Mode=OneWay, Converter={StaticResource DialogTypeToHeaderConverter}}" />
+        <ContentControl
+            Content="{Binding}"
+            Style="{StaticResource TypedValueHelper}" />
+    </StackPanel>
+</view:BaseControl>

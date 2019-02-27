@@ -10,6 +10,7 @@
     xmlns:behaviors="clr-namespace:Scar.Common.WPF.Controls.Behaviors;assembly=Scar.Common.WPF.Controls.Behaviors"
     xmlns:viewModel="clr-namespace:GitTfsShell.ViewModel"
     HorizontalAlignment="Stretch"
+    Style="{StaticResource Control}"
     d:DataContext="{d:DesignInstance d:Type=viewModel:ShelveViewModel}">
     <Grid
         commonView:MarginSetter.Margin="{StaticResource CommonMargin}"

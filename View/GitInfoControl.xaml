@@ -10,10 +10,11 @@
     xmlns:controls="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock"
     xmlns:data="clr-namespace:GitTfsShell.Data"
     HorizontalAlignment="Stretch"
+    Style="{StaticResource Control}"
+    Padding="10"
     d:DataContext="{d:DesignInstance d:Type=data:GitInfo}">
     <StackPanel
         commonView:MarginSetter.Margin="10">
-        <Separator />
         <controls:SelectableTextBlock
             Text="{Binding UncommittedFilesCount, Mode=OneTime, StringFormat=Uncommitted changes: {0}}" />
         <controls:SelectableTextBlock

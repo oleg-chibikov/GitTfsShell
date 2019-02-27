@@ -1,4 +1,4 @@
-<baseWindow:BaseWindow
+<animatedWindow:AnimatedWindow
     x:Class="GitTfsShell.View.MainWindow"
     x:ClassModifier="internal"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,12 +12,13 @@
     xmlns:behaviors="clr-namespace:Scar.Common.WPF.Controls.Behaviors;assembly=Scar.Common.WPF.Controls.Behaviors"
     xmlns:controls="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock"
     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-    xmlns:baseWindow="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View.BaseWindow"
+    xmlns:animatedWindow="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View.AnimatedWindow"
     Icon="../icon.ico"
     mc:Ignorable="d"
     MinWidth="800"
     SizeToContent="WidthAndHeight"
     ResizeMode="CanMinimize"
+    Background="{StaticResource DarkerBackground}"
     d:DataContext="{d:DesignInstance viewModel:MainViewModel}"
     Title="GIT TFS">
     <i:Interaction.Triggers>
@@ -27,56 +28,10 @@
                 Command="{Binding WindowClosingCommand, Mode=OneTime}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <baseWindow:BaseWindow.Resources>
-        <Style
-            x:Key="TypedValueHelper"
-            TargetType="{x:Type ContentControl}">
-            <Style.Triggers>
-                <DataTrigger
-                    Binding="{Binding Path=DialogType}"
-                    Value="Shelve">
-                    <Setter
-                        Property="ContentTemplate">
-                        <Setter.Value>
-                            <DataTemplate>
-                                <view:ShelveControl
-                                    DataContext="{Binding ShelveViewModel, Mode=OneWay}" />
-                            </DataTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </DataTrigger>
-                <DataTrigger
-                    Binding="{Binding Path=DialogType}"
-                    Value="Unshelve">
-                    <Setter
-                        Property="ContentTemplate">
-                        <Setter.Value>
-                            <DataTemplate>
-                                <view:UnshelveControl
-                                    DataContext="{Binding UnshelveViewModel, Mode=OneWay}" />
-                            </DataTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </baseWindow:BaseWindow.Resources>
     <materialDesign:DialogHost
         IsOpen="{Binding IsDialogOpen, Mode=OneWay}">
         <materialDesign:DialogHost.DialogContent>
-            <StackPanel
-                Margin="10"
-                Orientation="Vertical"
-                commonView:MarginSetter.Margin="{StaticResource CommonMargin}">
-                <TextBlock
-                    Padding="5"
-                    Background="Beige"
-                    FontWeight="Bold"
-                    Text="{Binding DialogType, Mode=OneWay, Converter={StaticResource DialogTypeToHeaderConverter}}" />
-                <ContentControl
-                    Content="{Binding}"
-                    Style="{StaticResource TypedValueHelper}" />
-            </StackPanel>
+            <view:GenericDialogControl />
         </materialDesign:DialogHost.DialogContent>
         <StackPanel
             Margin="10"
@@ -109,17 +64,15 @@
             </Grid>
             <Border
                 Visibility="{Binding HasInfo, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
-                Background="White"
-                BorderBrush="Orange"
+                BorderBrush="{StaticResource Foreground}"
                 BorderThickness="2"
-                CornerRadius="4"
                 Padding="5">
                 <StackPanel
                     commonView:MarginSetter.Margin="10">
                     <DockPanel>
                         <Button
                             DockPanel.Dock="Right"
-                            Background="OrangeRed"
+                            Foreground="OrangeRed"
                             Visibility="{Binding CanCancel, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Style="{StaticResource ImageButton}"
                             ToolTip="Cancel"
@@ -148,7 +101,6 @@
             </Border>
             <ListBox
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                FontFamily="Consolas"
                 MaxHeight="400"
                 MaxWidth="900"
                 behaviors:ListBoxAutoScrollBehavior.ScrollOnNewItem="true"
@@ -156,14 +108,15 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <controls:SelectableTextBlock
+                            FontFamily="Consolas"
+                            FontSize="{StaticResource TinyFontSize}"
                             Text="{Binding Text, Mode=OneWay}"
                             Foreground="{Binding Type, Mode=OneWay, Converter={StaticResource MessageTypeToBrushConverter}}" />
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <DockPanel>
+            <DockPanel Background="{StaticResource Background}">
                 <Button
-                    Background="Transparent"
                     Style="{StaticResource ImageButton}"
                     ToolTip="View logs"
                     Command="{Binding ShowLogsCommand, Mode=OneTime}">
@@ -182,7 +135,7 @@
                             Kind="Download" />
                     </Button>
                     <Button
-                        Background="Gold"
+                        Foreground="Gold"
                         Style="{StaticResource ImageButton}"
                         ToolTip="Unshelve"
                         Command="{Binding OpenUnshelveDialogCommand, Mode=OneTime}">
@@ -190,7 +143,7 @@
                             Kind="CloudDownload" />
                     </Button>
                     <Button
-                        Background="ForestGreen"
+                        Foreground="ForestGreen"
                         Style="{StaticResource ImageButton}"
                         ToolTip="Shelve"
                         Command="{Binding OpenShelveDialogCommand, Mode=OneTime}">
@@ -201,4 +154,4 @@
             </DockPanel>
         </StackPanel>
     </materialDesign:DialogHost>
-</baseWindow:BaseWindow>
+</animatedWindow:AnimatedWindow>
