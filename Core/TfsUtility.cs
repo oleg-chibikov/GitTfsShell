@@ -161,10 +161,11 @@ namespace GitTfsShell.Core
             try
             {
                 var user = GetCurrentUser();
-                var workspaces = _versionControlServer.QueryWorkspaces(null, user, Environment.MachineName);
+                var workspaces = _versionControlServer.QueryWorkspaces(null, user, Environment.MachineName)
+                    .Where(workspace => workspace.Name.StartsWith("git-tfs-", StringComparison.OrdinalIgnoreCase));
                 foreach (var workspace in workspaces.Where(workspace => workspace.IsServerPathMapped(mapping.ServerItem)))
                 {
-                    _messageHub.Publish("Temp workspace still exists. Deleting...".ToMessage());
+                    _messageHub.Publish($"Temp workspace {workspace.Name} still exists. Deleting...".ToMessage());
                     workspace.DeleteMapping(mapping);
                     workspace.Delete();
                 }

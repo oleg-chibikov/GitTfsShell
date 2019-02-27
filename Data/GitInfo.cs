@@ -28,7 +28,7 @@ namespace GitTfsShell.Data
         public string BranchName { get; }
 
         [CanBeNull]
-        public string CommitMessage => CommitMessages.FirstOrDefault();
+        public string CommitMessage => CommitMessages.LastOrDefault(); //The first message is usually the most valuable - the later messages tend to be 'Fixed that'-like.
 
         [NotNull]
         public ICollection<string> CommitMessages { get; }
