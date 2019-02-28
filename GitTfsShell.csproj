@@ -256,8 +256,8 @@
     <Reference Include="Scar.Common.WPF.Commands, Version=1.0.6753.27805, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Scar.Common.WPF.Commands.1.0.6753.27805\lib\net47\Scar.Common.WPF.Commands.dll</HintPath>
     </Reference>
-    <Reference Include="Scar.Common.WPF.Controls.Behaviors, Version=1.0.6731.30683, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Scar.Common.WPF.Controls.Behaviors.1.0.6731.30683\lib\net47\Scar.Common.WPF.Controls.Behaviors.dll</HintPath>
+    <Reference Include="Scar.Common.WPF.Controls.Behaviors, Version=1.0.6998.22355, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Scar.Common.WPF.Controls.Behaviors.1.0.6998.22355\lib\net47\Scar.Common.WPF.Controls.Behaviors.dll</HintPath>
     </Reference>
     <Reference Include="Scar.Common.WPF.Controls.SelectableTextBlock, Version=1.0.6731.29765, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Scar.Common.WPF.Controls.SelectableTextBlock.1.0.6731.29765\lib\net47\Scar.Common.WPF.Controls.SelectableTextBlock.dll</HintPath>

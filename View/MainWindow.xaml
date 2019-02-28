@@ -103,8 +103,11 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 MaxHeight="400"
                 MaxWidth="900"
-                behaviors:ListBoxAutoScrollBehavior.ScrollOnNewItem="true"
+                SelectionMode="Single"
                 ItemsSource="{Binding Logs, Mode=OneTime}">
+                <i:Interaction.Behaviors>
+                    <behaviors:ListBoxAutoScrollBehavior />
+                </i:Interaction.Behaviors>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <controls:SelectableTextBlock
