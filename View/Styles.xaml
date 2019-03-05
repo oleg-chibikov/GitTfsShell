@@ -352,4 +352,6 @@
         x:Key="MessageTypeToBrushConverter" />
     <converters:DialogTypeToHeaderConverter
         x:Key="DialogTypeToHeaderConverter" />
+    <converters:GitConflictsToBrushConverter
+        x:Key="GitConflictsToBrushConverter" />
 </ResourceDictionary>

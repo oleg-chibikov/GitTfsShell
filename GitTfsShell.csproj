@@ -83,6 +83,7 @@
     <Compile Include="ViewModel\PullViewModel.cs" />
     <Compile Include="ViewModel\UnshelveViewModel.cs" />
     <Compile Include="ViewModel\ShelveViewModel.cs" />
+    <Compile Include="View\Converters\GitConflictsToBrushConverter.cs" />
     <Compile Include="View\ExternalBrowserHyperlink.cs" />
     <Compile Include="View\Converters\DialogTypeToHeaderConverter.cs" />
     <Compile Include="View\GenericDialogControl.xaml.cs">

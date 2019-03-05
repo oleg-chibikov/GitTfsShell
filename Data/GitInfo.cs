@@ -14,7 +14,8 @@ namespace GitTfsShell.Data
             [NotNull] string branchName,
             int uncommittedFilesCount,
             bool isDirty,
-            int nonMergeBranchCommitsCount)
+            int nonMergeBranchCommitsCount,
+            int conflictsCount)
         {
             Repo = repo ?? throw new ArgumentNullException(nameof(repo));
             CommitMessages = commitMessages ?? throw new ArgumentNullException(nameof(commitMessages));
@@ -22,6 +23,7 @@ namespace GitTfsShell.Data
             UncommittedFilesCount = uncommittedFilesCount;
             IsDirty = isDirty;
             NonMergeBranchCommitsCount = nonMergeBranchCommitsCount;
+            ConflictsCount = conflictsCount;
         }
 
         [NotNull]
@@ -34,6 +36,8 @@ namespace GitTfsShell.Data
         public ICollection<string> CommitMessages { get; }
 
         public bool IsDirty { get; }
+
+        public int ConflictsCount { get; }
 
         public int NonMergeBranchCommitsCount { get; }
 

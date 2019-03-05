@@ -141,6 +141,8 @@ namespace GitTfsShell.Core
                             commitMessages = new string[0];
                         }
 
+                        var conflictsCount = repo.Index.Conflicts.Count();
+
                         // var master = repo.Branches["master"];
                         // var nonMergeCommits = GetCommitsDiff(repo, master)
                         // .Where(x => x.Parents.Count() == 1)
@@ -162,7 +164,11 @@ namespace GitTfsShell.Core
                         // BeautifyMessage(repo.Head.Tip.Message)
                         // };
                         // }
-                        var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branchName, uncommittedFilesCount, isDirty, commitMessages.Length);
+                        var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branchName, uncommittedFilesCount, isDirty, commitMessages.Length, conflictsCount);
+                        if (conflictsCount > 0)
+                        {
+                            _messageHub.Publish($"There are {conflictsCount} conflicts. Please solve them".ToWarning());
+                        }
                         _logger.Debug("Got Git info");
                         return gitInfo;
                     })

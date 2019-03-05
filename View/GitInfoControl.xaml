@@ -23,5 +23,7 @@
             Text="{Binding NonMergeBranchCommitsCount, Mode=OneTime, StringFormat=GIT commits count in branch: {0}}" />
         <controls:SelectableTextBlock
             Text="{Binding CommitMessage, Mode=OneTime, StringFormat=GIT comment: {0}}" />
+        <controls:SelectableTextBlock Foreground="{Binding ConflictsCount, Mode=OneTime, Converter={StaticResource GitConflictsToBrushConverter}}"
+            Text="{Binding ConflictsCount, Mode=OneTime, StringFormat=GIT conflicts count: {0}}" />
     </StackPanel>
 </commonView:BaseControl>
