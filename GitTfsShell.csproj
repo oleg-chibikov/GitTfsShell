@@ -80,6 +80,7 @@
     <Compile Include="Core\TfsUtility.cs" />
     <Compile Include="Data\DialogType.cs" />
     <Compile Include="Data\TaskState.cs" />
+    <Compile Include="ViewModel\ConfirmationViewModel.cs" />
     <Compile Include="ViewModel\PullViewModel.cs" />
     <Compile Include="ViewModel\UnshelveViewModel.cs" />
     <Compile Include="ViewModel\ShelveViewModel.cs" />
@@ -89,6 +90,10 @@
     <Compile Include="View\GenericDialogControl.xaml.cs">
       <DependentUpon>GenericDialogControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\ConfirmationWindow.xaml.cs">
+      <DependentUpon>ConfirmationWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\IConfirmationWindow.cs" />
     <Compile Include="View\TfsInfoControl.xaml.cs">
       <DependentUpon>TfsInfoControl.xaml</DependentUpon>
     </Compile>
@@ -104,6 +109,10 @@
     <Page Include="View\GenericDialogControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ConfirmationWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="View\TfsInfoControl.xaml">
       <Generator>MSBuild:Compile</Generator>

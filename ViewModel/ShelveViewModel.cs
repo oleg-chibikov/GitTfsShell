@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using Easy.MessageHub;
 using GitTfsShell.Core;
 using GitTfsShell.Data;
 using GitTfsShell.Properties;
+using GitTfsShell.View;
 using JetBrains.Annotations;
 using PropertyChanged;
 using Scar.Common.Messages;
@@ -44,6 +46,12 @@ namespace GitTfsShell.ViewModel
         private readonly IList<Guid> _subscriptionTokens = new List<Guid>();
 
         [NotNull]
+        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
+
+        [NotNull]
+        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
+
+        [NotNull]
         private readonly SynchronizationContext _synchronizationContext;
 
         [NotNull]
@@ -67,7 +75,9 @@ namespace GitTfsShell.ViewModel
             [NotNull] ICmdUtility cmdUtility,
             [NotNull] IGitTfsUtility gitTfsUtility,
             [NotNull] ITfsUtility tfsUtility,
-            [NotNull] SynchronizationContext synchronizationContext)
+            [NotNull] SynchronizationContext synchronizationContext,
+            [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
+            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory)
         {
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
             _gitUtility = gitUtility ?? throw new ArgumentNullException(nameof(gitUtility));
@@ -75,6 +85,8 @@ namespace GitTfsShell.ViewModel
             _gitTfsUtility = gitTfsUtility ?? throw new ArgumentNullException(nameof(gitTfsUtility));
             _tfsUtility = tfsUtility ?? throw new ArgumentNullException(nameof(tfsUtility));
             _synchronizationContext = synchronizationContext ?? throw new ArgumentNullException(nameof(synchronizationContext));
+            _confirmationViewModelFactory = confirmationViewModelFactory ?? throw new ArgumentNullException(nameof(confirmationViewModelFactory));
+            _confirmationWindowFactory = confirmationWindowFactory ?? throw new ArgumentNullException(nameof(confirmationWindowFactory));
             _gitInfo = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
@@ -202,14 +214,18 @@ namespace GitTfsShell.ViewModel
             _gitInfo.Repo.Dispose();
         }
 
-        private static MessageBoxResult ConfirmOverwriteExistingShelveset([NotNull] string shelvesetName, [NotNull] string user)
+        private Task<bool> ConfirmOverwriteExistingShelvesetAsync([NotNull] string shelvesetName, [NotNull] string user)
         {
-            var confirmationResult = MessageBox.Show(
-                $"Shelveset {shelvesetName} already exists for user {user}. Overwrite?",
-                "Shelveset exists",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            return confirmationResult;
+            var confirmationViewModel = _confirmationViewModelFactory($"Shelveset {shelvesetName} already exists for user {user}. Overwrite?", true);
+
+            _synchronizationContext.Send(
+                x =>
+                {
+                    var confirmationWindow = _confirmationWindowFactory(confirmationViewModel);
+                    confirmationWindow.ShowDialog();
+                },
+                null);
+            return confirmationViewModel.UserInput;
         }
 
         private void Cancel()
@@ -262,8 +278,8 @@ namespace GitTfsShell.ViewModel
                         var shelvesetExists = _tfsUtility.ShelvesetExists(user, shelvesetName);
                         if (shelvesetExists)
                         {
-                            var confirmationResult = ConfirmOverwriteExistingShelveset(shelvesetName, user);
-                            if (confirmationResult != MessageBoxResult.Yes)
+                            var confirmationResult = await ConfirmOverwriteExistingShelvesetAsync(shelvesetName, user);
+                            if (!confirmationResult)
                             {
                                 return;
                             }

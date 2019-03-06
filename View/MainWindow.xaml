@@ -17,7 +17,7 @@
     mc:Ignorable="d"
     MinWidth="800"
     SizeToContent="WidthAndHeight"
-    ResizeMode="CanMinimize"
+    ResizeMode="NoResize"
     Background="{StaticResource DarkerBackground}"
     d:DataContext="{d:DesignInstance viewModel:MainViewModel}"
     Title="GIT TFS">

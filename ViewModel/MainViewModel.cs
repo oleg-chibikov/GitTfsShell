@@ -5,12 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
 using Easy.MessageHub;
 using GitTfsShell.Core;
 using GitTfsShell.Data;
 using GitTfsShell.Properties;
+using GitTfsShell.View;
 using JetBrains.Annotations;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using PropertyChanged;
@@ -50,6 +50,12 @@ namespace GitTfsShell.ViewModel
         private readonly Func<string, TfsInfo, PullViewModel> _pullViewModelFactory;
 
         [NotNull]
+        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
+
+        [NotNull]
+        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
+
+        [NotNull]
         private readonly Func<string, GitInfo, TfsInfo, ShelveViewModel> _shelveViewModelFactory;
 
         [NotNull]
@@ -83,10 +89,14 @@ namespace GitTfsShell.ViewModel
             [NotNull] Func<string, TfsInfo, PullViewModel> pullViewModelFactory,
             [NotNull] IGitTfsUtility gitTfsUtility,
             [NotNull] ITfsUtility tfsUtility,
-            [NotNull] ICancellationTokenSourceProvider cancellationTokenSourceProvider)
+            [NotNull] ICancellationTokenSourceProvider cancellationTokenSourceProvider,
+            [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
+            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory)
         {
             _tfsUtility = tfsUtility;
             _cancellationTokenSourceProvider = cancellationTokenSourceProvider ?? throw new ArgumentNullException(nameof(cancellationTokenSourceProvider));
+            _confirmationViewModelFactory = confirmationViewModelFactory ?? throw new ArgumentNullException(nameof(confirmationViewModelFactory));
+            _confirmationWindowFactory = confirmationWindowFactory ?? throw new ArgumentNullException(nameof(confirmationWindowFactory));
             _pullViewModelFactory = pullViewModelFactory ?? throw new ArgumentNullException(nameof(pullViewModelFactory));
             _synchronizationContext = synchronizationContext ?? throw new ArgumentNullException(nameof(synchronizationContext));
             processUtility = processUtility ?? throw new ArgumentNullException(nameof(processUtility));
@@ -228,14 +238,30 @@ namespace GitTfsShell.ViewModel
             ClearAll();
         }
 
-        private static MessageBoxResult ConfirmRepositoryCreation()
+        private Task<bool> ConfirmRepositoryCreationAsync()
         {
-            var confirmationResult = MessageBox.Show(
-                "No GIT repository detected. Would you like to create one (could take a considerable amount of time)?",
-                "Create GIT repository",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            return confirmationResult;
+            var confirmationViewModel = _confirmationViewModelFactory("No GIT repository detected. Would you like to create one (could take a considerable amount of time)?", true);
+            _synchronizationContext.Send(
+                x =>
+                {
+                    var confirmationWindow = _confirmationWindowFactory(confirmationViewModel);
+                    confirmationWindow.ShowDialog();
+                },
+                null);
+            return confirmationViewModel.UserInput;
+        }
+
+        private Task ShowEnterDirectoryMessageAsync()
+        {
+            var confirmationViewModel = _confirmationViewModelFactory("Please enter the directory", false);
+            _synchronizationContext.Send(
+                x =>
+                {
+                    var confirmationWindow = _confirmationWindowFactory(confirmationViewModel);
+                    confirmationWindow.ShowDialog();
+                },
+                null);
+            return confirmationViewModel.UserInput;
         }
 
         private void Cancel()
@@ -404,7 +430,7 @@ namespace GitTfsShell.ViewModel
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
             {
-                MessageBox.Show("Please enter the directory");
+                await ShowEnterDirectoryMessageAsync();
                 return;
             }
 
@@ -429,8 +455,8 @@ namespace GitTfsShell.ViewModel
 
                         if (gitInfo == null)
                         {
-                            var confirmationResult = ConfirmRepositoryCreation();
-                            if (confirmationResult == MessageBoxResult.Yes)
+                            var confirmationResult = await ConfirmRepositoryCreationAsync();
+                            if (confirmationResult)
                             {
                                 _tfsUtility.GetLatest(tfsInfo);
                                 await _gitTfsUtility.CloneAsync(tfsInfo, directoryPath, cancellationToken).ConfigureAwait(false);

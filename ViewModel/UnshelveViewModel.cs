@@ -4,10 +4,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
-using System.Windows;
+using System.Threading.Tasks;
 using Easy.MessageHub;
 using GitTfsShell.Core;
 using GitTfsShell.Data;
+using GitTfsShell.View;
 using JetBrains.Annotations;
 using PropertyChanged;
 using Scar.Common.WPF.Commands;
@@ -19,22 +20,28 @@ namespace GitTfsShell.ViewModel
     public sealed class UnshelveViewModel : IDisposable, IDataErrorInfo
     {
         [CanBeNull]
-        private static string currentBranchName;
+        private static string _currentBranchName;
 
         [CanBeNull]
-        private static string currentShelvesetName;
+        private static string _currentShelvesetName;
 
         [CanBeNull]
-        private static UserInfo currentUser;
+        private static UserInfo _currentUser;
 
         [CanBeNull]
-        private static string currentUsersSearchPattern;
+        private static string _currentUsersSearchPattern;
 
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
 
         [NotNull]
         private readonly string _directoryPath;
+
+        [NotNull]
+        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
+
+        [NotNull]
+        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
 
         [NotNull]
         private readonly IDictionary<string, string> _errors = new Dictionary<string, string>();
@@ -76,7 +83,9 @@ namespace GitTfsShell.ViewModel
             [NotNull] ICmdUtility cmdUtility,
             [NotNull] IGitTfsUtility gitTfsUtility,
             [NotNull] ITfsUtility tfsUtility,
-            [NotNull] SynchronizationContext synchronizationContext)
+            [NotNull] SynchronizationContext synchronizationContext,
+            [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
+            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory)
         {
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
             _gitUtility = gitUtility ?? throw new ArgumentNullException(nameof(gitUtility));
@@ -84,6 +93,8 @@ namespace GitTfsShell.ViewModel
             _gitTfsUtility = gitTfsUtility ?? throw new ArgumentNullException(nameof(gitTfsUtility));
             _tfsUtility = tfsUtility ?? throw new ArgumentNullException(nameof(tfsUtility));
             _synchronizationContext = synchronizationContext ?? throw new ArgumentNullException(nameof(synchronizationContext));
+            _confirmationViewModelFactory = confirmationViewModelFactory ?? throw new ArgumentNullException(nameof(confirmationViewModelFactory));
+            _confirmationWindowFactory = confirmationWindowFactory ?? throw new ArgumentNullException(nameof(confirmationWindowFactory));
             _gitInfo = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
@@ -109,8 +120,8 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string BranchName
         {
-            get => currentBranchName;
-            set => currentBranchName = value;
+            get => _currentBranchName;
+            set => _currentBranchName = value;
         }
 
         [NotNull]
@@ -119,10 +130,10 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string ShelvesetName
         {
-            get => currentShelvesetName;
+            get => _currentShelvesetName;
             set
             {
-                currentShelvesetName = value;
+                _currentShelvesetName = value;
                 string prefix = null;
                 if (User != null && User.Code != _tfsUtility.GetCurrentUser())
                 {
@@ -142,10 +153,10 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public UserInfo User
         {
-            get => currentUser;
+            get => _currentUser;
             set
             {
-                currentUser = value;
+                _currentUser = value;
                 if (value == null)
                 {
                     return;
@@ -165,11 +176,11 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         public string UsersSearchPattern
         {
-            get => currentUsersSearchPattern;
+            get => _currentUsersSearchPattern;
 
             set
             {
-                currentUsersSearchPattern = value;
+                _currentUsersSearchPattern = value;
                 var text = value;
                 if (string.IsNullOrWhiteSpace(text))
                 {
@@ -261,9 +272,30 @@ namespace GitTfsShell.ViewModel
             _gitInfo.Repo.Dispose();
         }
 
-        private static void WarnBranchExists([NotNull] string branchName)
+        private Task WarnBranchExistsAsync([NotNull] string branchName)
         {
-            MessageBox.Show($"Branch {branchName} already exists. Please choose another name", "Branch exists", MessageBoxButton.OK, MessageBoxImage.Warning);
+            var confirmationViewModel = _confirmationViewModelFactory($"Branch {branchName} already exists. Please choose another name", false);
+            _synchronizationContext.Send(
+                x =>
+                {
+                    var confirmationWindow = _confirmationWindowFactory(confirmationViewModel);
+                    confirmationWindow.ShowDialog();
+                },
+                null);
+            return confirmationViewModel.UserInput;
+        }
+
+        private Task WarnShelvesetDoesNotExistAsync([NotNull] string shelvesetName)
+        {
+            var confirmationViewModel = _confirmationViewModelFactory($"Shelveset {shelvesetName} does not exist. Please select an existing one", false);
+            _synchronizationContext.Send(
+                x =>
+                {
+                    var confirmationWindow = _confirmationWindowFactory(confirmationViewModel);
+                    confirmationWindow.ShowDialog();
+                },
+                null);
+            return confirmationViewModel.UserInput;
         }
 
         private void Cancel()
@@ -304,18 +336,14 @@ namespace GitTfsShell.ViewModel
                         var shelvesetExists = _tfsUtility.ShelvesetExists(null, shelvesetName ?? throw new InvalidOperationException());
                         if (!shelvesetExists)
                         {
-                            MessageBox.Show(
-                                $"Shelveset {shelvesetName} does not exist. Please select an existing one",
-                                "Shelveset does not exist",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
+                            await WarnShelvesetDoesNotExistAsync(shelvesetName);
                             return;
                         }
 
                         var branchExists = _gitUtility.BranchExists(_gitInfo, branchName ?? throw new InvalidOperationException());
                         if (branchExists)
                         {
-                            WarnBranchExists(branchName);
+                            await WarnBranchExistsAsync(branchName);
                             return;
                         }
 

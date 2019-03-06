@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using Autofac;
 using GitTfsShell.Core;
@@ -21,9 +22,17 @@ namespace GitTfsShell
         [NotNull]
         private readonly TfsTeamProjectCollection _tfs;
 
+        [NotNull]
+        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
+
+        [NotNull]
+        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
+
         public App()
         {
             _tfs = new TfsTeamProjectCollection(new Uri(Settings.Default.TfsUri));
+            _confirmationViewModelFactory = Container.Resolve<Func<string, bool, ConfirmationViewModel>>();
+            _confirmationWindowFactory = Container.Resolve<Func<ConfirmationViewModel, IConfirmationWindow>>();
         }
 
         protected override NewInstanceHandling NewInstanceHandling => NewInstanceHandling.AllowMultiple;
@@ -48,10 +57,12 @@ namespace GitTfsShell
             builder.RegisterType<GitTfsUtility>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<CancellationTokenSourceProvider>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<MainWindow>().AsImplementedInterfaces().InstancePerDependency();
+            builder.RegisterType<ConfirmationWindow>().AsImplementedInterfaces().InstancePerDependency();
             builder.RegisterType<MainViewModel>().AsSelf().InstancePerDependency();
             builder.RegisterType<ShelveViewModel>().AsSelf().InstancePerDependency();
             builder.RegisterType<UnshelveViewModel>().AsSelf().InstancePerDependency();
             builder.RegisterType<PullViewModel>().AsSelf().InstancePerDependency();
+            builder.RegisterType<ConfirmationViewModel>().AsSelf().InstancePerDependency();
             builder.Register(c => _tfs.GetService<VersionControlServer>()).AsSelf().SingleInstance();
             builder.Register(c => _tfs.GetService<IIdentityManagementService>()).AsImplementedInterfaces().SingleInstance();
         }
@@ -70,8 +81,26 @@ namespace GitTfsShell
 
             if (message.Exception != null)
             {
-                MessageBox.Show(message.Text, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowPopup(message).Wait();
             }
+        }
+
+        private Task ShowPopup([NotNull] Message message)
+        {
+            if (SynchronizationContext == null)
+            {
+                MessageBox.Show(message.Text, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return Task.CompletedTask;
+            }
+            var confirmationViewModel = _confirmationViewModelFactory(message.Text, false);
+            SynchronizationContext.Send(
+                x =>
+                {
+                    var confirmationWindow = _confirmationWindowFactory(confirmationViewModel);
+                    confirmationWindow.ShowDialog();
+                },
+                null);
+            return confirmationViewModel.UserInput;
         }
     }
 }

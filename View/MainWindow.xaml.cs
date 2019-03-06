@@ -1,13 +1,15 @@
+using System;
 using GitTfsShell.ViewModel;
+using JetBrains.Annotations;
 
 namespace GitTfsShell.View
 {
     internal sealed partial class MainWindow : IMainWindow
     {
-        public MainWindow(MainViewModel mainViewModel)
+        public MainWindow([NotNull] MainViewModel mainViewModel)
         {
             InitializeComponent();
-            DataContext = mainViewModel;
+            DataContext = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         }
     }
 }
