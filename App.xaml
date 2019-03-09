@@ -19,6 +19,8 @@
                     Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Button.xaml" />
                 <ResourceDictionary
                     Source="View/Styles.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/Scar.Common.WPF.Controls.Styles;component/ScrollBar.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
