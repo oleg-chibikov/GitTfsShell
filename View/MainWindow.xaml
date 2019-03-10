@@ -10,9 +10,10 @@
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:view="clr-namespace:GitTfsShell.View"
     xmlns:behaviors="clr-namespace:Scar.Common.WPF.Controls.Behaviors;assembly=Scar.Common.WPF.Controls.Behaviors"
-    xmlns:controls="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock"
+    xmlns:selectableTextBlock="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.SelectableTextBlock"
     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
     xmlns:animatedWindow="clr-namespace:Scar.Common.WPF.View;assembly=Scar.Common.WPF.View.AnimatedWindow"
+    xmlns:externalBrowserHyperlink="clr-namespace:Scar.Common.WPF.Controls;assembly=Scar.Common.WPF.Controls.ExternalBrowserHyperlink"
     Icon="../icon.ico"
     mc:Ignorable="d"
     MinWidth="800"
@@ -80,17 +81,17 @@
                             <materialDesign:PackIcon
                                 Kind="Cancel" />
                         </Button>
-                        <controls:SelectableTextBlock
+                        <selectableTextBlock:SelectableTextBlock
                             Visibility="{Binding CreatedShelvesetName, Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             Text="{Binding CreatedShelvesetName, Mode=OneWay, StringFormat=Last shelveset name: {0}}" />
                     </DockPanel>
-                    <controls:SelectableTextBlock
+                    <selectableTextBlock:SelectableTextBlock
                         Visibility="{Binding CreatedShelvesetUrl, Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}">
-                        <view:ExternalBrowserHyperlink
+                        <externalBrowserHyperlink:ExternalBrowserHyperlink
                             NavigateUri="{Binding CreatedShelvesetUrl, Mode=OneWay}">
                             Open in browser
-                        </view:ExternalBrowserHyperlink>
-                    </controls:SelectableTextBlock>
+                        </externalBrowserHyperlink:ExternalBrowserHyperlink>
+                    </selectableTextBlock:SelectableTextBlock>
                     <view:TfsInfoControl
                         Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                         DataContext="{Binding TfsInfo, Mode=OneWay}" />
@@ -110,7 +111,7 @@
                 </i:Interaction.Behaviors>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <controls:SelectableTextBlock
+                        <selectableTextBlock:SelectableTextBlock
                             FontFamily="Consolas"
                             FontSize="{StaticResource TinyFontSize}"
                             Text="{Binding Text, Mode=OneWay}"

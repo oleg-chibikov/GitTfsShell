@@ -88,7 +88,6 @@
     <Compile Include="ViewModel\UnshelveViewModel.cs" />
     <Compile Include="ViewModel\ShelveViewModel.cs" />
     <Compile Include="View\Converters\GitConflictsToBrushConverter.cs" />
-    <Compile Include="View\ExternalBrowserHyperlink.cs" />
     <Compile Include="View\Converters\DialogTypeToHeaderConverter.cs" />
     <Compile Include="View\GenericDialogControl.xaml.cs">
       <DependentUpon>GenericDialogControl.xaml</DependentUpon>
@@ -271,6 +270,9 @@
     </Reference>
     <Reference Include="Scar.Common.WPF.Controls.Behaviors, Version=1.0.6998.22355, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Scar.Common.WPF.Controls.Behaviors.1.0.6998.22355\lib\net47\Scar.Common.WPF.Controls.Behaviors.dll</HintPath>
+    </Reference>
+    <Reference Include="Scar.Common.WPF.Controls.ExternalBrowserHyperlink, Version=1.0.7008.19827, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Scar.Common.WPF.Controls.ExternalBrowserHyperlink.1.0.7008.19827\lib\net47\Scar.Common.WPF.Controls.ExternalBrowserHyperlink.dll</HintPath>
     </Reference>
     <Reference Include="Scar.Common.WPF.Controls.SelectableTextBlock, Version=1.0.6731.29765, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Scar.Common.WPF.Controls.SelectableTextBlock.1.0.6731.29765\lib\net47\Scar.Common.WPF.Controls.SelectableTextBlock.dll</HintPath>
