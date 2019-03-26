@@ -95,8 +95,9 @@ namespace GitTfsShell.Core
                         }
 
                         var tfsMappedServerFolder = workspace.GetServerItemForLocalItem(directoryPath);
+                        var teamProject = _versionControlServer.TryGetTeamProjectForServerPath(tfsMappedServerFolder);
                         var tfsWorkspaceName = workspace.Name;
-                        var tfsInfo = new TfsInfo(workspace, tfsWorkspaceName, tfsMappedServerFolder);
+                        var tfsInfo = new TfsInfo(workspace, tfsWorkspaceName, tfsMappedServerFolder, teamProject?.Name);
                         _logger.Debug("Got TFS info");
                         return tfsInfo;
                     })

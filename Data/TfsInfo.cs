@@ -6,11 +6,12 @@ namespace GitTfsShell.Data
 {
     public sealed class TfsInfo
     {
-        public TfsInfo([NotNull] Workspace workspace, [NotNull] string tfsWorkspaceName, [NotNull] string mappedServerFolder)
+        public TfsInfo([NotNull] Workspace workspace, [NotNull] string tfsWorkspaceName, [NotNull] string mappedServerFolder, [CanBeNull] string teamProjectName)
         {
             Workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
             WorkspaceName = tfsWorkspaceName ?? throw new ArgumentNullException(nameof(tfsWorkspaceName));
             MappedServerFolder = mappedServerFolder ?? throw new ArgumentNullException(nameof(mappedServerFolder));
+            TeamProjectName = teamProjectName;
         }
 
         [NotNull]
@@ -21,5 +22,8 @@ namespace GitTfsShell.Data
 
         [NotNull]
         public string WorkspaceName { get; }
+
+        [CanBeNull]
+        public string TeamProjectName { get; }
     }
 }

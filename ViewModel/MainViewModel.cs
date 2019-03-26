@@ -336,7 +336,9 @@ namespace GitTfsShell.ViewModel
         {
             _ = data ?? throw new ArgumentNullException(nameof(data));
             CreatedShelvesetName = data.Name;
-            CreatedShelvesetUrl = Settings.Default.TfsUri + "_versionControl/shelveset?ss=" + _tfsUtility.GetShelvesetQualifiedName(data.User, data.Name);
+            var teamProjectName = TfsInfo?.TeamProjectName;
+            CreatedShelvesetUrl =
+                $"{Settings.Default.TfsUri}{(teamProjectName == null ? null : teamProjectName + "/")}_versionControl/shelveset?ss={_tfsUtility.GetShelvesetQualifiedName(data.User, data.Name)}";
         }
 
         private void OnTaskAction(TaskState taskState)

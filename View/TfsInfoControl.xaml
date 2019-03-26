@@ -19,5 +19,7 @@
             Text="{Binding WorkspaceName, Mode=OneTime, StringFormat=TFS workspace: {0}}" />
         <controls:SelectableTextBlock
             Text="{Binding MappedServerFolder, Mode=OneTime, StringFormat=TFS directory: {0}}" />
+        <controls:SelectableTextBlock
+            Text="{Binding TeamProjectName, Mode=OneTime, StringFormat=Team project: {0}}" />
     </StackPanel>
 </commonView:BaseControl>
