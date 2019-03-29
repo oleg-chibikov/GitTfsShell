@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using Easy.MessageHub;
 using GitTfsShell.Core;
@@ -155,6 +156,14 @@ namespace GitTfsShell.ViewModel
         public string CreatedShelvesetUrl { get; private set; }
 
         public DialogType DialogType { get; private set; }
+
+        public SizeToContent SizeToContent { get; private set; } = SizeToContent.WidthAndHeight;
+
+        public ResizeMode ResizeMode { get; private set; } = ResizeMode.CanMinimize;
+
+        public int MinHeight { get; private set; } = 100;
+
+        public double Top { get; set; }
 
         [NotNull]
         public string DirectoryPath { get; private set; } = string.Empty;
@@ -503,6 +512,11 @@ namespace GitTfsShell.ViewModel
                     DirectoryPath = directoryPath;
                     RaiseBrowseCommandsCanExecuteChanged();
                     RaiseGitTfsCommandsCanExecuteChanged();
+                    SizeToContent = SizeToContent.Manual;
+                    ResizeMode = ResizeMode.CanResize;
+                    MinHeight = 800;
+                    // ReSharper disable once PossibleLossOfFraction
+                    Top = (SystemParameters.WorkArea.Height - MinHeight) / 2;
                 },
                 null);
         }

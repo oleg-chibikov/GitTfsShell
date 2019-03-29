@@ -17,8 +17,10 @@
     Icon="../icon.ico"
     mc:Ignorable="d"
     MinWidth="800"
-    SizeToContent="WidthAndHeight"
-    ResizeMode="CanMinimize"
+    MinHeight="{Binding MinHeight, Mode=OneWay}"
+    Top="{Binding Top, Mode=TwoWay}"
+    SizeToContent="{Binding SizeToContent, Mode=OneWay}"
+    ResizeMode="{Binding ResizeMode, Mode=OneWay}"
     Background="{StaticResource DarkerBackground}"
     d:DataContext="{d:DesignInstance viewModel:MainViewModel}"
     Title="GIT TFS">
@@ -34,76 +36,87 @@
         <materialDesign:DialogHost.DialogContent>
             <view:GenericDialogControl />
         </materialDesign:DialogHost.DialogContent>
-        <StackPanel
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition
+                    Height="Auto" />
+                <RowDefinition
+                    Height="*" />
+                <RowDefinition
+                    Height="Auto" />
+            </Grid.RowDefinitions>
+            <StackPanel
+            Grid.Row="0"
             Margin="10"
             commonView:MarginSetter.Margin="10">
-            <Grid
+                <Grid
                 commonView:MarginSetter.Margin="{StaticResource CommonMargin}"
                 commonView:MarginSetter.Orientation="Horizontal">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition
-                        Width="*" />
-                    <ColumnDefinition
-                        Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition
+                            Width="*" />
+                        <ColumnDefinition
+                            Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
                     IsEnabled="{Binding CanBrowse, Mode=OneWay}"
                     Grid.Column="0"
                     MinWidth="300"
                     Text="{Binding DirectoryPath, Mode=OneWay}">
-                    <TextBox.InputBindings>
-                        <KeyBinding
+                        <TextBox.InputBindings>
+                            <KeyBinding
                             CommandParameter="{Binding Text, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TextBox}}"
                             Command="{Binding SetDirectoryCommand, Mode=OneTime}"
                             Key="Enter" />
-                    </TextBox.InputBindings>
-                </TextBox>
-                <Button
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button
                     Grid.Column="1"
                     Command="{Binding ChooseDirectoryCommand, Mode=OneTime}"
                     Content="Browse..." />
-            </Grid>
-            <Border
+                </Grid>
+                <Border
                 Visibility="{Binding HasInfo, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                 BorderBrush="{StaticResource Foreground}"
                 BorderThickness="2"
                 Padding="5">
-                <StackPanel
+                    <StackPanel
                     commonView:MarginSetter.Margin="10">
-                    <DockPanel>
-                        <Button
+                        <DockPanel>
+                            <Button
                             DockPanel.Dock="Right"
                             Foreground="OrangeRed"
                             Visibility="{Binding CanCancel, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Style="{StaticResource ImageButton}"
                             ToolTip="Cancel"
                             Command="{Binding CancelCommand, Mode=OneTime}">
-                            <materialDesign:PackIcon
+                                <materialDesign:PackIcon
                                 Kind="Cancel" />
-                        </Button>
-                        <selectableTextBlock:SelectableTextBlock
+                            </Button>
+                            <selectableTextBlock:SelectableTextBlock
                             Visibility="{Binding CreatedShelvesetName, Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             Text="{Binding CreatedShelvesetName, Mode=OneWay, StringFormat=Last shelveset name: {0}}" />
-                    </DockPanel>
-                    <selectableTextBlock:SelectableTextBlock
+                        </DockPanel>
+                        <selectableTextBlock:SelectableTextBlock
                         Visibility="{Binding CreatedShelvesetUrl, Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}">
-                        <externalBrowserHyperlink:ExternalBrowserHyperlink
+                            <externalBrowserHyperlink:ExternalBrowserHyperlink
                             NavigateUri="{Binding CreatedShelvesetUrl, Mode=OneWay}">
-                            Open in browser
-                        </externalBrowserHyperlink:ExternalBrowserHyperlink>
-                    </selectableTextBlock:SelectableTextBlock>
-                    <view:TfsInfoControl
+                                Open in browser
+                            </externalBrowserHyperlink:ExternalBrowserHyperlink>
+                        </selectableTextBlock:SelectableTextBlock>
+                        <view:TfsInfoControl
                         Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                         DataContext="{Binding TfsInfo, Mode=OneWay}" />
-                    <view:GitInfoControl
+                        <view:GitInfoControl
                         Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                         DataContext="{Binding GitInfo, Mode=OneWay}" />
-                </StackPanel>
-            </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
             <ListBox
+                Grid.Row="1"
+                VerticalAlignment="Top"
                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                MaxHeight="400"
-                MaxWidth="900"
                 SelectionMode="Single"
                 ItemsSource="{Binding Logs, Mode=OneTime}">
                 <i:Interaction.Behaviors>
@@ -119,7 +132,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <DockPanel Background="{StaticResource Background}">
+            <DockPanel Grid.Row="2" Background="{StaticResource Background}">
                 <Button
                     Style="{StaticResource ImageButton}"
                     ToolTip="View logs"
@@ -156,6 +169,6 @@
                     </Button>
                 </StackPanel>
             </DockPanel>
-        </StackPanel>
+        </Grid>
     </materialDesign:DialogHost>
 </animatedWindow:AnimatedWindow>
