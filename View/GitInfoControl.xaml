@@ -15,15 +15,16 @@
     d:DataContext="{d:DesignInstance d:Type=data:GitInfo}">
     <StackPanel
         commonView:MarginSetter.Margin="10">
+        <TextBlock FontFamily="{StaticResource FontHeader}" Text="GIT" />
         <controls:SelectableTextBlock
             Text="{Binding UncommittedFilesCount, Mode=OneTime, StringFormat=Uncommitted changes: {0}}" />
         <controls:SelectableTextBlock
-            Text="{Binding BranchName, Mode=OneTime, StringFormat=GIT branch: {0}}" />
+            Text="{Binding BranchName, Mode=OneTime, StringFormat=Branch: {0}}" />
         <controls:SelectableTextBlock
-            Text="{Binding NonMergeBranchCommitsCount, Mode=OneTime, StringFormat=GIT commits count in branch: {0}}" />
+            Text="{Binding NonMergeBranchCommitsCount, Mode=OneTime, StringFormat=Commits count in branch: {0}}" />
         <controls:SelectableTextBlock
-            Text="{Binding CommitMessage, Mode=OneTime, StringFormat=GIT comment: {0}}" />
+            Text="{Binding CommitMessage, Mode=OneTime, StringFormat=Comment: {0}}" />
         <controls:SelectableTextBlock Foreground="{Binding ConflictsCount, Mode=OneTime, Converter={StaticResource GitConflictsToBrushConverter}}"
-            Text="{Binding ConflictsCount, Mode=OneTime, StringFormat=GIT conflicts count: {0}}" />
+            Text="{Binding ConflictsCount, Mode=OneTime, StringFormat=Conflicts count: {0}}" />
     </StackPanel>
 </commonView:BaseControl>

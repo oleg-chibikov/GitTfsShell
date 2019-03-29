@@ -11,13 +11,14 @@ using GitTfsShell.Data;
 using GitTfsShell.View;
 using JetBrains.Annotations;
 using PropertyChanged;
-using Scar.Common.WPF.Commands;
+using Scar.Common.MVVM.Commands;
+using Scar.Common.MVVM.ViewModel;
 
 namespace GitTfsShell.ViewModel
 {
     [AddINotifyPropertyChangedInterface]
     [UsedImplicitly]
-    public sealed class UnshelveViewModel : IDisposable, IDataErrorInfo
+    public sealed class UnshelveViewModel : BaseViewModel, IDataErrorInfo
     {
         [CanBeNull]
         private static string _currentBranchName;
@@ -85,7 +86,9 @@ namespace GitTfsShell.ViewModel
             [NotNull] ITfsUtility tfsUtility,
             [NotNull] SynchronizationContext synchronizationContext,
             [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
-            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory)
+            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory,
+            [NotNull] ICommandManager commandManager)
+            : base(commandManager)
         {
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
             _gitUtility = gitUtility ?? throw new ArgumentNullException(nameof(gitUtility));
@@ -99,8 +102,8 @@ namespace GitTfsShell.ViewModel
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
-            UnshelveCommand = new CorrelationCommand(Unshelve, () => CanExecute);
-            CancelCommand = new CorrelationCommand(Cancel, () => !IsLoading);
+            UnshelveCommand = AddCommand(Unshelve, () => CanExecute);
+            CancelCommand = AddCommand(Cancel, () => !IsLoading);
 
             if (User == null)
             {
@@ -261,15 +264,19 @@ namespace GitTfsShell.ViewModel
             }
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            foreach (var subscriptionToken in _subscriptionTokens)
+            base.Dispose(disposing);
+            if (disposing)
             {
-                _messageHub.Unsubscribe(subscriptionToken);
-            }
+                foreach (var subscriptionToken in _subscriptionTokens)
+                {
+                    _messageHub.Unsubscribe(subscriptionToken);
+                }
 
-            _subscriptionTokens.Clear();
-            _gitInfo.Repo.Dispose();
+                _subscriptionTokens.Clear();
+                _gitInfo.Repo.Dispose();
+            }
         }
 
         private Task WarnBranchExistsAsync([NotNull] string branchName)

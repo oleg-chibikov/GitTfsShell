@@ -18,13 +18,14 @@ using Scar.Common.Async;
 using Scar.Common.Events;
 using Scar.Common.Messages;
 using Scar.Common.Processes;
-using Scar.Common.WPF.Commands;
+using Scar.Common.MVVM.Commands;
+using Scar.Common.MVVM.ViewModel;
 
 namespace GitTfsShell.ViewModel
 {
     [AddINotifyPropertyChangedInterface]
     [UsedImplicitly]
-    public sealed class MainViewModel : IDisposable
+    public sealed class MainViewModel : BaseViewModel
     {
         [NotNull]
         private readonly ICancellationTokenSourceProvider _cancellationTokenSourceProvider;
@@ -91,7 +92,9 @@ namespace GitTfsShell.ViewModel
             [NotNull] ITfsUtility tfsUtility,
             [NotNull] ICancellationTokenSourceProvider cancellationTokenSourceProvider,
             [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
-            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory)
+            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory,
+            [NotNull] ICommandManager commandManager)
+            : base(commandManager)
         {
             _tfsUtility = tfsUtility;
             _cancellationTokenSourceProvider = cancellationTokenSourceProvider ?? throw new ArgumentNullException(nameof(cancellationTokenSourceProvider));
@@ -110,14 +113,14 @@ namespace GitTfsShell.ViewModel
             processUtility.ProcessMessageFired += ProcessUtility_ProcessMessageFired;
             processUtility.ProcessErrorFired += ProcessUtility_ProcessErrorFired;
 
-            ChooseDirectoryCommand = new CorrelationCommand(ChooseDirectory, () => CanBrowse);
-            SetDirectoryCommand = new CorrelationCommand<string>(SetDirectoryAsync, directory => CanBrowse);
-            PullCommand = new CorrelationCommand(GitTfsPull, () => CanExecuteGitTfsAction);
-            OpenShelveDialogCommand = new CorrelationCommand(OpenShelveDialogAsync, () => CanExecuteGitTfsAction);
-            OpenUnshelveDialogCommand = new CorrelationCommand(OpenUnshelveDialogAsync, () => CanExecuteGitTfsAction);
-            WindowClosingCommand = new AsyncCorrelationCommand(WindowClosing);
-            CancelCommand = new CorrelationCommand(Cancel, () => CanCancel);
-            ShowLogsCommand = new CorrelationCommand(ProcessCommands.ViewLogs);
+            ChooseDirectoryCommand = AddCommand(ChooseDirectory, () => CanBrowse);
+            SetDirectoryCommand = AddCommand<string>(SetDirectoryAsync, directory => CanBrowse);
+            PullCommand = AddCommand(GitTfsPull, () => CanExecuteGitTfsAction);
+            OpenShelveDialogCommand = AddCommand(OpenShelveDialogAsync, () => CanExecuteGitTfsAction);
+            OpenUnshelveDialogCommand = AddCommand(OpenUnshelveDialogAsync, () => CanExecuteGitTfsAction);
+            WindowClosingCommand = AddCommand(WindowClosing);
+            CancelCommand = AddCommand(Cancel, () => CanCancel);
+            ShowLogsCommand = AddCommand(ProcessCommands.ViewLogs);
             _dialog = new CommonOpenFileDialog
             {
                 IsFolderPicker = true,
@@ -227,15 +230,19 @@ namespace GitTfsShell.ViewModel
             }
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            foreach (var subscriptionToken in _subscriptionTokens)
+            base.Dispose(disposing);
+            if (disposing)
             {
-                _messageHub.Unsubscribe(subscriptionToken);
-            }
+                foreach (var subscriptionToken in _subscriptionTokens)
+                {
+                    _messageHub.Unsubscribe(subscriptionToken);
+                }
 
-            _subscriptionTokens.Clear();
-            ClearAll();
+                _subscriptionTokens.Clear();
+                ClearAll();
+            }
         }
 
         private Task<bool> ConfirmRepositoryCreationAsync()
@@ -414,18 +421,28 @@ namespace GitTfsShell.ViewModel
 
         private void RaiseBrowseCommandsCanExecuteChanged()
         {
-            ChooseDirectoryCommand.RaiseCanExecuteChanged();
-            SetDirectoryCommand.RaiseCanExecuteChanged();
+            _synchronizationContext.Send(
+                x =>
+                {
+                    ChooseDirectoryCommand.RaiseCanExecuteChanged();
+                    SetDirectoryCommand.RaiseCanExecuteChanged();
+                },
+                null);
         }
 
         private void RaiseGitTfsCommandsCanExecuteChanged()
         {
-            lock (_lockObject)
-            {
-                PullCommand.RaiseCanExecuteChanged();
-                OpenShelveDialogCommand.RaiseCanExecuteChanged();
-                OpenUnshelveDialogCommand.RaiseCanExecuteChanged();
-            }
+            _synchronizationContext.Send(
+                x =>
+                {
+                    lock (_lockObject)
+                    {
+                        PullCommand.RaiseCanExecuteChanged();
+                        OpenShelveDialogCommand.RaiseCanExecuteChanged();
+                        OpenUnshelveDialogCommand.RaiseCanExecuteChanged();
+                    }
+                },
+                null);
         }
 
         private async void SetDirectoryAsync(string directoryPath)

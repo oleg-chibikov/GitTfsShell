@@ -5,12 +5,14 @@ using GitTfsShell.Core;
 using GitTfsShell.Data;
 using JetBrains.Annotations;
 using PropertyChanged;
+using Scar.Common.MVVM.Commands;
+using Scar.Common.MVVM.ViewModel;
 
 namespace GitTfsShell.ViewModel
 {
     [AddINotifyPropertyChangedInterface]
     [UsedImplicitly]
-    public sealed class PullViewModel
+    public sealed class PullViewModel: BaseViewModel
     {
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
@@ -40,7 +42,9 @@ namespace GitTfsShell.ViewModel
             [NotNull] ITfsUtility tfsUtility,
             [NotNull] IGitUtility gitUtility,
             [NotNull] TfsInfo tfsInfo,
-            [NotNull] ICmdUtility cmdUtility)
+            [NotNull] ICmdUtility cmdUtility,
+            [NotNull] ICommandManager commandManager)
+            : base(commandManager)
         {
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
             _gitTfsUtility = gitTfsUtility ?? throw new ArgumentNullException(nameof(gitTfsUtility));

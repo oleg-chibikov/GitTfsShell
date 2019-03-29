@@ -10,10 +10,11 @@ using JetBrains.Annotations;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
+using Scar.Common.ApplicationBootstrapper;
 using Scar.Common.Async;
 using Scar.Common.Messages;
+using Scar.Common.MVVM.Commands;
 using Scar.Common.Processes;
-using Scar.Common.WPF.Startup;
 
 namespace GitTfsShell
 {
@@ -50,6 +51,7 @@ namespace GitTfsShell
 
         protected override void RegisterDependencies(ContainerBuilder builder)
         {
+            builder.RegisterType<ApplicationCommandManager>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<ProcessUtility>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<GitUtility>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<TfsUtility>().AsImplementedInterfaces().SingleInstance();

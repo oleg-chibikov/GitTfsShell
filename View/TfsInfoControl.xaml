@@ -15,10 +15,11 @@
     d:DataContext="{d:DesignInstance d:Type=data:TfsInfo}">
     <StackPanel
         commonView:MarginSetter.Margin="10">
+        <TextBlock FontFamily="{StaticResource FontHeader}" Text="TFS" />
         <controls:SelectableTextBlock
-            Text="{Binding WorkspaceName, Mode=OneTime, StringFormat=TFS workspace: {0}}" />
+            Text="{Binding WorkspaceName, Mode=OneTime, StringFormat=Workspace: {0}}" />
         <controls:SelectableTextBlock
-            Text="{Binding MappedServerFolder, Mode=OneTime, StringFormat=TFS directory: {0}}" />
+            Text="{Binding MappedServerFolder, Mode=OneTime, StringFormat=Directory: {0}}" />
         <controls:SelectableTextBlock
             Text="{Binding TeamProjectName, Mode=OneTime, StringFormat=Team project: {0}}" />
     </StackPanel>

@@ -13,13 +13,14 @@ using GitTfsShell.View;
 using JetBrains.Annotations;
 using PropertyChanged;
 using Scar.Common.Messages;
-using Scar.Common.WPF.Commands;
+using Scar.Common.MVVM.Commands;
+using Scar.Common.MVVM.ViewModel;
 
 namespace GitTfsShell.ViewModel
 {
     [AddINotifyPropertyChangedInterface]
     [UsedImplicitly]
-    public sealed class ShelveViewModel : IDisposable, IDataErrorInfo
+    public sealed class ShelveViewModel : BaseViewModel, IDataErrorInfo
     {
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
@@ -77,7 +78,9 @@ namespace GitTfsShell.ViewModel
             [NotNull] ITfsUtility tfsUtility,
             [NotNull] SynchronizationContext synchronizationContext,
             [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
-            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory)
+            [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory,
+            [NotNull] ICommandManager commandManager)
+            : base(commandManager)
         {
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
             _gitUtility = gitUtility ?? throw new ArgumentNullException(nameof(gitUtility));
@@ -91,8 +94,8 @@ namespace GitTfsShell.ViewModel
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
-            ShelveOrCheckinCommand = new CorrelationCommand(ShelveOrCheckin, () => CanExecute);
-            CancelCommand = new CorrelationCommand(Cancel, () => !IsLoading);
+            ShelveOrCheckinCommand = AddCommand(ShelveOrCheckin, () => CanExecute);
+            CancelCommand = AddCommand(Cancel, () => !IsLoading);
 
             IsDirty = CommitDirty = _gitInfo.IsDirty;
             ShelvesetName = GetShelvesetName();
@@ -203,15 +206,19 @@ namespace GitTfsShell.ViewModel
             }
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            foreach (var subscriptionToken in _subscriptionTokens)
+            base.Dispose(disposing);
+            if (disposing)
             {
-                _messageHub.Unsubscribe(subscriptionToken);
-            }
+                foreach (var subscriptionToken in _subscriptionTokens)
+                {
+                    _messageHub.Unsubscribe(subscriptionToken);
+                }
 
-            _subscriptionTokens.Clear();
-            _gitInfo.Repo.Dispose();
+                _subscriptionTokens.Clear();
+                _gitInfo.Repo.Dispose();
+            }
         }
 
         private Task<bool> ConfirmOverwriteExistingShelvesetAsync([NotNull] string shelvesetName, [NotNull] string user)
