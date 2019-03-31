@@ -121,6 +121,7 @@ namespace GitTfsShell.ViewModel
             OpenUnshelveDialogCommand = AddCommand(OpenUnshelveDialogAsync, () => CanExecuteGitTfsAction);
             WindowClosingCommand = AddCommand(WindowClosing);
             CancelCommand = AddCommand(Cancel, () => CanCancel);
+            CopyShelvesetToClipboardCommand = AddCommand(CopyShelvesetToClipboard, () => CreatedShelvesetName != null);
             ShowLogsCommand = AddCommand(ProcessCommands.ViewLogs);
             _dialog = new CommonOpenFileDialog
             {
@@ -147,6 +148,9 @@ namespace GitTfsShell.ViewModel
 
         [NotNull]
         public IRefreshableCommand CancelCommand { get; }
+
+        [NotNull]
+        public IRefreshableCommand CopyShelvesetToClipboardCommand { get; }
 
         [NotNull]
         public IRefreshableCommand ChooseDirectoryCommand { get; }
@@ -284,6 +288,12 @@ namespace GitTfsShell.ViewModel
         {
             _cancellationTokenSourceProvider.Cancel();
             _messageHub.Publish("Operation canceled".ToWarning());
+        }
+
+        private void CopyShelvesetToClipboard()
+        {
+            Clipboard.SetText(CreatedShelvesetName);
+            _messageHub.Publish("Shelveset name is copied to clipboard".ToMessage());
         }
 
         private void ChooseDirectory()
