@@ -27,6 +27,9 @@ namespace GitTfsShell.Core
         [CanBeNull]
         string GetShelvesetQualifiedName([CanBeNull] string user, [NotNull] string shelvesetName);
 
+        [CanBeNull]
+        string GetShelvesetUrl([NotNull] ShelvesetData data, [CanBeNull] TfsInfo tfsInfo);
+
         [NotNull]
         ICollection<string> GetShelvesets([CanBeNull] string user);
 

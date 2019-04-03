@@ -10,7 +10,8 @@ using JetBrains.Annotations;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
-using Scar.Common.ApplicationBootstrapper;
+using Scar.Common;
+using Scar.Common.ApplicationStartup;
 using Scar.Common.Async;
 using Scar.Common.Messages;
 using Scar.Common.MVVM.Commands;
@@ -21,13 +22,13 @@ namespace GitTfsShell
     internal sealed partial class App
     {
         [NotNull]
-        private readonly TfsTeamProjectCollection _tfs;
-
-        [NotNull]
         private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
 
         [NotNull]
         private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
+
+        [NotNull]
+        private readonly TfsTeamProjectCollection _tfs;
 
         public App()
         {
@@ -58,6 +59,7 @@ namespace GitTfsShell
             builder.RegisterType<CmdUtility>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<GitTfsUtility>().AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<CancellationTokenSourceProvider>().AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<RateLimiter>().AsImplementedInterfaces().InstancePerDependency();
             builder.RegisterType<MainWindow>().AsImplementedInterfaces().InstancePerDependency();
             builder.RegisterType<ConfirmationWindow>().AsImplementedInterfaces().InstancePerDependency();
             builder.RegisterType<MainViewModel>().AsSelf().InstancePerDependency();
@@ -94,6 +96,7 @@ namespace GitTfsShell
                 MessageBox.Show(message.Text, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return Task.CompletedTask;
             }
+
             var confirmationViewModel = _confirmationViewModelFactory(message.Text, false);
             SynchronizationContext.Send(
                 x =>

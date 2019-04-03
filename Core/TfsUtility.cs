@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Common.Logging;
 using Easy.MessageHub;
 using GitTfsShell.Data;
+using GitTfsShell.Properties;
 using JetBrains.Annotations;
 using Microsoft.TeamFoundation.Framework.Client;
 using Microsoft.TeamFoundation.Framework.Common;
@@ -125,6 +126,16 @@ namespace GitTfsShell.Core
             var name = shelveset?.QualifiedName;
             _logger.DebugFormat("Got shelveset qualified name for {0}: {1}", shelvesetName, name);
             return name;
+        }
+
+        [NotNull]
+        public string GetShelvesetUrl(ShelvesetData data, TfsInfo tfsInfo)
+        {
+            _ = data ?? throw new ArgumentNullException(nameof(data));
+
+            var teamProjectName = tfsInfo?.TeamProjectName;
+            return
+                $"{Settings.Default.TfsUri}{(teamProjectName == null ? null : teamProjectName + "/")}_versionControl/shelveset?ss={GetShelvesetQualifiedName(data.User, data.Name)}";
         }
 
         public ICollection<string> GetShelvesets(string user)

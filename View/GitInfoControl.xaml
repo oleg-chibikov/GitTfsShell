@@ -1,5 +1,4 @@
-<commonView:BaseControl
-    x:Class="GitTfsShell.View.GitInfoControl"
+<commonView:BaseControl x:Class="GitTfsShell.View.GitInfoControl"
     x:ClassModifier="internal"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -13,17 +12,13 @@
     Style="{StaticResource Control}"
     Padding="10"
     d:DataContext="{d:DesignInstance d:Type=data:GitInfo}">
-    <StackPanel
-        commonView:MarginSetter.Margin="10">
-        <TextBlock FontFamily="{StaticResource FontHeader}" Text="GIT" />
-        <controls:SelectableTextBlock
-            Text="{Binding UncommittedFilesCount, Mode=OneTime, StringFormat=Uncommitted changes: {0}}" />
-        <controls:SelectableTextBlock
-            Text="{Binding BranchName, Mode=OneTime, StringFormat=Branch: {0}}" />
-        <controls:SelectableTextBlock
-            Text="{Binding NonMergeBranchCommitsCount, Mode=OneTime, StringFormat=Commits count in branch: {0}}" />
-        <controls:SelectableTextBlock
-            Text="{Binding CommitMessage, Mode=OneTime, StringFormat=Comment: {0}}" />
+    <StackPanel commonView:MarginSetter.Margin="10">
+        <TextBlock FontFamily="{StaticResource FontHeader}"
+            Text="GIT" />
+        <controls:SelectableTextBlock Text="{Binding UncommittedFilesCount, Mode=OneTime, StringFormat=Uncommitted changes: {0}}" />
+        <controls:SelectableTextBlock Text="{Binding BranchName, Mode=OneTime, StringFormat=Branch: {0}}" />
+        <controls:SelectableTextBlock Text="{Binding NonMergeBranchCommitsCount, Mode=OneTime, StringFormat=Commits count in branch: {0}}" />
+        <controls:SelectableTextBlock Text="{Binding CommitMessage, Mode=OneTime, StringFormat=Comment: {0}}" />
         <controls:SelectableTextBlock Foreground="{Binding ConflictsCount, Mode=OneTime, Converter={StaticResource GitConflictsToBrushConverter}}"
             Text="{Binding ConflictsCount, Mode=OneTime, StringFormat=Conflicts count: {0}}" />
     </StackPanel>

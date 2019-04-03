@@ -169,6 +169,7 @@ namespace GitTfsShell.Core
                         {
                             _messageHub.Publish($"There are {conflictsCount} conflicts. Please solve them".ToWarning());
                         }
+
                         _logger.Debug("Got Git info");
                         return gitInfo;
                     })

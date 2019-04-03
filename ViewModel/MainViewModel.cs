@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -18,9 +19,9 @@ using PropertyChanged;
 using Scar.Common.Async;
 using Scar.Common.Events;
 using Scar.Common.Messages;
-using Scar.Common.Processes;
 using Scar.Common.MVVM.Commands;
 using Scar.Common.MVVM.ViewModel;
+using Scar.Common.Processes;
 
 namespace GitTfsShell.ViewModel
 {
@@ -33,6 +34,12 @@ namespace GitTfsShell.ViewModel
 
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
+
+        [NotNull]
+        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
+
+        [NotNull]
+        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
 
         [NotNull]
         private readonly CommonOpenFileDialog _dialog;
@@ -50,12 +57,6 @@ namespace GitTfsShell.ViewModel
 
         [NotNull]
         private readonly Func<string, TfsInfo, PullViewModel> _pullViewModelFactory;
-
-        [NotNull]
-        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
-
-        [NotNull]
-        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
 
         [NotNull]
         private readonly Func<string, GitInfo, TfsInfo, ShelveViewModel> _shelveViewModelFactory;
@@ -79,6 +80,9 @@ namespace GitTfsShell.ViewModel
 
         [CanBeNull]
         private TfsInfo _tfsInfo;
+
+        [CanBeNull]
+        private string _createdShelvesetUrl;
 
         public MainViewModel(
             [NotNull] SynchronizationContext synchronizationContext,
@@ -122,6 +126,7 @@ namespace GitTfsShell.ViewModel
             WindowClosingCommand = AddCommand(WindowClosing);
             CancelCommand = AddCommand(Cancel, () => CanCancel);
             CopyShelvesetToClipboardCommand = AddCommand(CopyShelvesetToClipboard, () => CreatedShelvesetName != null);
+            OpenShelvesetInBrowserCommand = AddCommand(OpenShelvesetInBrowser, () => _createdShelvesetUrl != null);
             ShowLogsCommand = AddCommand(ProcessCommands.ViewLogs);
             _dialog = new CommonOpenFileDialog
             {
@@ -156,8 +161,6 @@ namespace GitTfsShell.ViewModel
         public IRefreshableCommand ChooseDirectoryCommand { get; }
 
         public string CreatedShelvesetName { get; private set; }
-
-        public string CreatedShelvesetUrl { get; private set; }
 
         public DialogType DialogType { get; private set; }
 
@@ -198,6 +201,9 @@ namespace GitTfsShell.ViewModel
         public IRefreshableCommand OpenUnshelveDialogCommand { get; }
 
         [NotNull]
+        public IRefreshableCommand OpenShelvesetInBrowserCommand { get; }
+
+        [NotNull]
         public IRefreshableCommand PullCommand { get; }
 
         [NotNull]
@@ -231,7 +237,7 @@ namespace GitTfsShell.ViewModel
         [AlsoNotifyFor(nameof(DirectoryPath))]
         private bool DirectoryReRenderSwitch { get; set; }
 
-        private bool IsLoading
+        public bool IsLoading
         {
             get => _isLoading;
             set
@@ -292,8 +298,7 @@ namespace GitTfsShell.ViewModel
 
         private void CopyShelvesetToClipboard()
         {
-            Clipboard.SetText(CreatedShelvesetName);
-            _messageHub.Publish("Shelveset name is copied to clipboard".ToMessage());
+            _cmdUtility.CopyToClipboard(CreatedShelvesetName);
         }
 
         private void ChooseDirectory()
@@ -326,9 +331,9 @@ namespace GitTfsShell.ViewModel
         private void OnDialogChanged(DialogType dialogType)
         {
             switch (dialogType)
-            {
+                    {
                 case DialogType.None:
-                    IsDialogOpen = false;
+                        IsDialogOpen = false;
                     return;
                 case DialogType.Shelve:
                     IsDialogOpen = true;
@@ -362,9 +367,7 @@ namespace GitTfsShell.ViewModel
         {
             _ = data ?? throw new ArgumentNullException(nameof(data));
             CreatedShelvesetName = data.Name;
-            var teamProjectName = TfsInfo?.TeamProjectName;
-            CreatedShelvesetUrl =
-                $"{Settings.Default.TfsUri}{(teamProjectName == null ? null : teamProjectName + "/")}_versionControl/shelveset?ss={_tfsUtility.GetShelvesetQualifiedName(data.User, data.Name)}";
+            _createdShelvesetUrl = _tfsUtility.GetShelvesetUrl(data, TfsInfo);
         }
 
         private void OnTaskAction(TaskState taskState)
@@ -416,6 +419,11 @@ namespace GitTfsShell.ViewModel
             _messageHub.Publish(gitInfo);
             _messageHub.Publish(tfsInfo);
             UnshelveViewModel = _unshelveViewModelFactory(DirectoryPath, gitInfo, tfsInfo);
+        }
+
+        private void OpenShelvesetInBrowser()
+        {
+            Process.Start(new ProcessStartInfo(_createdShelvesetUrl));
         }
 
         private void ProcessUtility_ProcessErrorFired(object sender, [NotNull] EventArgs<string> e)
@@ -522,10 +530,18 @@ namespace GitTfsShell.ViewModel
                     DirectoryPath = directoryPath;
                     RaiseBrowseCommandsCanExecuteChanged();
                     RaiseGitTfsCommandsCanExecuteChanged();
-                    SizeToContent = SizeToContent.Manual;
-                    ResizeMode = ResizeMode.CanResize;
-                    MinHeight = 800;
-                    // ReSharper disable once PossibleLossOfFraction
+                    if (HasInfo)
+                    {
+                        SizeToContent = SizeToContent.Manual;
+                        ResizeMode = ResizeMode.CanResize;
+                        MinHeight = 700;
+                    }
+                    else
+                    {
+                        SizeToContent = SizeToContent.WidthAndHeight;
+                        ResizeMode = ResizeMode.CanMinimize;
+                        MinHeight = 200;
+                    }
                     Top = (SystemParameters.WorkArea.Height - MinHeight) / 2;
                 },
                 null);

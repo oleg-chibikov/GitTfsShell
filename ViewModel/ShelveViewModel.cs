@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using Easy.MessageHub;
 using GitTfsShell.Core;
 using GitTfsShell.Data;
@@ -12,7 +11,6 @@ using GitTfsShell.Properties;
 using GitTfsShell.View;
 using JetBrains.Annotations;
 using PropertyChanged;
-using Scar.Common.Messages;
 using Scar.Common.MVVM.Commands;
 using Scar.Common.MVVM.ViewModel;
 
@@ -24,6 +22,12 @@ namespace GitTfsShell.ViewModel
     {
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
+
+        [NotNull]
+        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
+
+        [NotNull]
+        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
 
         [NotNull]
         private readonly string _directoryPath;
@@ -45,12 +49,6 @@ namespace GitTfsShell.ViewModel
 
         [NotNull]
         private readonly IList<Guid> _subscriptionTokens = new List<Guid>();
-
-        [NotNull]
-        private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
-
-        [NotNull]
-        private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
 
         [NotNull]
         private readonly SynchronizationContext _synchronizationContext;
@@ -294,11 +292,7 @@ namespace GitTfsShell.ViewModel
 
                         _messageHub.Publish(new ShelvesetData(shelvesetName));
                         _synchronizationContext.Post(
-                            x =>
-                            {
-                                Clipboard.SetText(shelvesetName);
-                                _messageHub.Publish("Shelveset name is copied to clipboard".ToMessage());
-                            },
+                            x => _cmdUtility.CopyToClipboard(shelvesetName),
                             null);
                         _messageHub.Publish(DialogType.None);
 

@@ -12,7 +12,7 @@ namespace GitTfsShell.ViewModel
 {
     [AddINotifyPropertyChangedInterface]
     [UsedImplicitly]
-    public sealed class PullViewModel: BaseViewModel
+    public sealed class PullViewModel : BaseViewModel
     {
         [NotNull]
         private readonly ICmdUtility _cmdUtility;

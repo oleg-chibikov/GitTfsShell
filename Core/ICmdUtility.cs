@@ -12,5 +12,7 @@ namespace GitTfsShell.Core
 
         [NotNull]
         Task ExecuteTaskAsync([NotNull] Func<CancellationToken, Task> action, bool notifySuccess = true);
+
+        void CopyToClipboard([CanBeNull] string text);
     }
 }

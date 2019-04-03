@@ -11,18 +11,10 @@ namespace GitTfsShell.ViewModel
     [UsedImplicitly]
     public sealed class ConfirmationViewModel : BaseViewModel
     {
-        [NotNull]
-        public string Text { get; }
-
-        public bool ShowButtons { get; }
-
         private readonly TaskCompletionSource<bool> _taskCompletionSource;
 
-        [DoNotNotify]
-        public Task<bool> UserInput => _taskCompletionSource.Task;
-
         public ConfirmationViewModel([NotNull] ICommandManager commandManager, bool showButtons, [NotNull] string text)
-            :base(commandManager)
+            : base(commandManager)
         {
             Text = text ?? throw new ArgumentNullException(nameof(text));
             DeclineCommand = AddCommand(Decline);
@@ -31,6 +23,14 @@ namespace GitTfsShell.ViewModel
             _taskCompletionSource = new TaskCompletionSource<bool>();
             ShowButtons = showButtons;
         }
+
+        [NotNull]
+        public string Text { get; }
+
+        public bool ShowButtons { get; }
+
+        [DoNotNotify]
+        public Task<bool> UserInput => _taskCompletionSource.Task;
 
         [NotNull]
         public IRefreshableCommand DeclineCommand { get; }

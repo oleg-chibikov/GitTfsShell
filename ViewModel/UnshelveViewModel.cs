@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using GitTfsShell.Data;
 using GitTfsShell.View;
 using JetBrains.Annotations;
 using PropertyChanged;
+using Scar.Common;
 using Scar.Common.MVVM.Commands;
 using Scar.Common.MVVM.ViewModel;
 
@@ -36,13 +38,13 @@ namespace GitTfsShell.ViewModel
         private readonly ICmdUtility _cmdUtility;
 
         [NotNull]
-        private readonly string _directoryPath;
-
-        [NotNull]
         private readonly Func<string, bool, ConfirmationViewModel> _confirmationViewModelFactory;
 
         [NotNull]
         private readonly Func<ConfirmationViewModel, IConfirmationWindow> _confirmationWindowFactory;
+
+        [NotNull]
+        private readonly string _directoryPath;
 
         [NotNull]
         private readonly IDictionary<string, string> _errors = new Dictionary<string, string>();
@@ -71,6 +73,9 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         private readonly ITfsUtility _tfsUtility;
 
+        [NotNull]
+        private readonly IRateLimiter _rateLimiter;
+
         private bool _hasValidationErrors;
 
         private bool _isLoading;
@@ -87,7 +92,8 @@ namespace GitTfsShell.ViewModel
             [NotNull] SynchronizationContext synchronizationContext,
             [NotNull] Func<string, bool, ConfirmationViewModel> confirmationViewModelFactory,
             [NotNull] Func<ConfirmationViewModel, IConfirmationWindow> confirmationWindowFactory,
-            [NotNull] ICommandManager commandManager)
+            [NotNull] ICommandManager commandManager,
+            [NotNull] IRateLimiter rateLimiter)
             : base(commandManager)
         {
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
@@ -98,12 +104,15 @@ namespace GitTfsShell.ViewModel
             _synchronizationContext = synchronizationContext ?? throw new ArgumentNullException(nameof(synchronizationContext));
             _confirmationViewModelFactory = confirmationViewModelFactory ?? throw new ArgumentNullException(nameof(confirmationViewModelFactory));
             _confirmationWindowFactory = confirmationWindowFactory ?? throw new ArgumentNullException(nameof(confirmationWindowFactory));
+            _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
             _gitInfo = gitInfo ?? throw new ArgumentNullException(nameof(gitInfo));
             _tfsInfo = tfsInfo ?? throw new ArgumentNullException(nameof(tfsInfo));
             _directoryPath = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
 
             UnshelveCommand = AddCommand(Unshelve, () => CanExecute);
             CancelCommand = AddCommand(Cancel, () => !IsLoading);
+            OpenShelvesetInBrowserCommand = AddCommand(OpenShelvesetInBrowser, () => ShelvesetName != null);
+            CopyShelvesetToClipboardCommand = AddCommand(CopyShelvesetToClipboard, () => ShelvesetName != null);
 
             if (User == null)
             {
@@ -129,6 +138,12 @@ namespace GitTfsShell.ViewModel
 
         [NotNull]
         public IRefreshableCommand CancelCommand { get; }
+
+        [NotNull]
+        public IRefreshableCommand OpenShelvesetInBrowserCommand { get; }
+
+        [NotNull]
+        public IRefreshableCommand CopyShelvesetToClipboardCommand { get; }
 
         [CanBeNull]
         public string ShelvesetName
@@ -164,9 +179,9 @@ namespace GitTfsShell.ViewModel
                 {
                     return;
                 }
+                UserShelvesetNames.Clear();
 
                 var shelvesets = _tfsUtility.GetShelvesets(value.Code);
-                UserShelvesetNames.Clear();
                 foreach (var shelveset in shelvesets)
                 {
                     UserShelvesetNames.Add(shelveset);
@@ -185,19 +200,27 @@ namespace GitTfsShell.ViewModel
             {
                 _currentUsersSearchPattern = value;
                 var text = value;
-                if (string.IsNullOrWhiteSpace(text))
-                {
-                    text = _tfsUtility.GetCurrentUser();
-                }
+                _rateLimiter.Throttle(
+                    TimeSpan.FromMilliseconds(500),
+                    () =>
+                    {
+                        if (string.IsNullOrWhiteSpace(text))
+                        {
+                            text = _tfsUtility.GetCurrentUser();
+                        }
 
-                var users = _tfsUtility.GetUsers(text);
-                Users.Clear();
-                foreach (var user in users)
-                {
-                    Users.Add(user);
-                }
+                        Users.Clear();
+                        UserShelvesetNames.Clear();
 
-                User = users.FirstOrDefault();
+                        var users = _tfsUtility.GetUsers(text);
+                        foreach (var user in users.OrderByDescending(
+                            x => x.DisplayName.StartsWith(text, StringComparison.OrdinalIgnoreCase) || x.Code.StartsWith(text, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            Users.Add(user);
+                        }
+
+                        User = users.FirstOrDefault();
+                    });
             }
         }
 
@@ -367,6 +390,21 @@ namespace GitTfsShell.ViewModel
                         _messageHub.Publish(await _gitUtility.GetInfoAsync(_directoryPath).ConfigureAwait(false));
                     })
                 .ConfigureAwait(false);
+        }
+
+        private void OpenShelvesetInBrowser()
+        {
+            if (ShelvesetName == null || User == null)
+            {
+                throw new InvalidOperationException("Shelveset or user are not set");
+            }
+
+            Process.Start(new ProcessStartInfo(_tfsUtility.GetShelvesetUrl(new ShelvesetData(ShelvesetName, User.Code), _tfsInfo)));
+        }
+
+        private void CopyShelvesetToClipboard()
+        {
+            _cmdUtility.CopyToClipboard(ShelvesetName);
         }
     }
 }

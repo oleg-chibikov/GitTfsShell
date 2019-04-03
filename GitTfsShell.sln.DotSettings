@@ -4,4 +4,9 @@
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=C787D059BE29ED449E13BBA32E4A0B38/@KeyIndexDefined">True</s:Boolean>
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileC787D059BE29ED449E13BBA32E4A0B38/@KeyIndexDefined">True</s:Boolean>
 	
-	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileC787D059BE29ED449E13BBA32E4A0B38/RelativePriority/@EntryValue">1</s:Double></wpf:ResourceDictionary>
+	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=FileC787D059BE29ED449E13BBA32E4A0B38/RelativePriority/@EntryValue">1</s:Double>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Checkin/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Shelveset/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Shelvesets/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Unshelve/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=workspaces/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

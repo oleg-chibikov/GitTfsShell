@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Easy.MessageHub;
 using GitTfsShell.Data;
 using JetBrains.Annotations;
@@ -27,6 +28,17 @@ namespace GitTfsShell.Core
             _processUtility = processUtility ?? throw new ArgumentNullException(nameof(processUtility));
             _messageHub = messageHub ?? throw new ArgumentNullException(nameof(messageHub));
             _cancellationTokenSourceProvider = cancellationTokenSourceProvider;
+        }
+
+        public void CopyToClipboard(string text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            Clipboard.SetText(text);
+            _messageHub.Publish($"'{text}' is copied to clipboard".ToMessage());
         }
 
         public async Task ExecuteCommandAsync(string executable, string command, string directoryPath, CancellationToken cancellationToken)
