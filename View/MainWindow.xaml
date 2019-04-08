@@ -92,10 +92,10 @@
                                 <materialDesign:PackIcon Kind="ContentCopy" />
                             </Button>
                         </StackPanel>
-                        <view:TfsInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
-                            DataContext="{Binding TfsInfo, Mode=OneWay}" />
                         <view:GitInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             DataContext="{Binding GitInfo, Mode=OneWay}" />
+                        <view:TfsInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
+                            DataContext="{Binding TfsInfo, Mode=OneWay}" />
                     </StackPanel>
                 </Border>
             </StackPanel>
