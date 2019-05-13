@@ -91,7 +91,7 @@ namespace GitTfsShell.Core
                         var workspace = _versionControlServer.TryGetWorkspace(directoryPath);
                         if (workspace == null)
                         {
-                            _logger.Debug("Not a TFS Workspace");
+                            _messageHub.Publish(new Message(new Exception("Not a TFS workspace"))); // Should be an exception to show a message as a popup (message list still not available)
                             return null;
                         }
 

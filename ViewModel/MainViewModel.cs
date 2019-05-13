@@ -88,6 +88,9 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         private readonly FileSystemWatcher _fileSystemWatcher;
 
+        private const int NoInfoMinHeight = 100;
+        private const int WithInfoMinHeight = 700;
+
         public MainViewModel(
             [NotNull] SynchronizationContext synchronizationContext,
             [NotNull] IProcessUtility processUtility,
@@ -153,7 +156,7 @@ namespace GitTfsShell.ViewModel
             _subscriptionTokens.Add(messageHub.Subscribe<ShelvesetData>(OnShelvesetEvent));
             _fileSystemWatcher = new FileSystemWatcher
             {
-                Filter = "HEAD.lock",
+                Filter = "INDEX.lock",
                 IncludeSubdirectories = true,
                 InternalBufferSize = 64 * 1024
             };
@@ -182,7 +185,7 @@ namespace GitTfsShell.ViewModel
 
         public ResizeMode ResizeMode { get; private set; } = ResizeMode.CanMinimize;
 
-        public int MinHeight { get; private set; } = 100;
+        public int MinHeight { get; private set; } = NoInfoMinHeight;
 
         public double Top { get; set; }
 
@@ -282,6 +285,7 @@ namespace GitTfsShell.ViewModel
                 _fileSystemWatcher.Dispose();
             }
         }
+
         private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             _rateLimiter.Throttle(TimeSpan.FromSeconds(3),
@@ -291,8 +295,9 @@ namespace GitTfsShell.ViewModel
                         _fileSystemWatcher.EnableRaisingEvents = false;
                         if (!IsLoading)
                         {
-                            await UpdateInfoAsync(_cancellationTokenSourceProvider.Token);
-                            _messageHub.Publish(e.FullPath + " changed. Info is refreshed");
+                            var token = _cancellationTokenSourceProvider.ResetTokenIfNeeded();
+                            await UpdateInfoAsync(token);
+                            _messageHub.Publish((e.FullPath + " changed. Info is refreshed").ToMessage());
                         }
 
                         _fileSystemWatcher.EnableRaisingEvents = true;
@@ -392,10 +397,7 @@ namespace GitTfsShell.ViewModel
         private void OnNewMessage([NotNull] Message message)
         {
             _ = message ?? throw new ArgumentNullException(nameof(message));
-            if (message.Exception == null)
-            {
-                _synchronizationContext.Send(x => Logs.Add(message), null);
-            }
+            _synchronizationContext.Send(x => Logs.Add(message), null);
         }
 
         private void OnShelvesetEvent([NotNull] ShelvesetData data)
@@ -448,7 +450,8 @@ namespace GitTfsShell.ViewModel
 
         private async void OpenShelveDialogAsync()
         {
-            var info = await UpdateInfoAsync(_cancellationTokenSourceProvider.Token);
+            var token = _cancellationTokenSourceProvider.ResetTokenIfNeeded();
+            var info = await UpdateInfoAsync(token);
             ShelveViewModel = _shelveViewModelFactory(DirectoryPath, info.GitInfo, info.TfsInfo);
         }
 
@@ -459,20 +462,27 @@ namespace GitTfsShell.ViewModel
         private async Task<CombinedInfo> UpdateInfoAsync(CancellationToken cancellationToken)
         {
             await _updateInfoSemaphore.WaitAsync(cancellationToken);
-            var gitInfoTask = _gitUtility.GetInfoAsync(DirectoryPath);
-            var tfsInfoTask = _tfsUtility.GetInfoAsync(DirectoryPath);
-            await Task.WhenAll(gitInfoTask, tfsInfoTask).ConfigureAwait(false);
-            var gitInfo = await gitInfoTask.ConfigureAwait(false);
-            var tfsInfo = await tfsInfoTask.ConfigureAwait(false);
-            _messageHub.Publish(gitInfo);
-            _messageHub.Publish(tfsInfo);
-            _updateInfoSemaphore.Release();
-            return new CombinedInfo(gitInfo, tfsInfo);
+            try
+            {
+                var gitInfoTask = _gitUtility.GetInfoAsync(DirectoryPath);
+                var tfsInfoTask = _tfsUtility.GetInfoAsync(DirectoryPath);
+                await Task.WhenAll(gitInfoTask, tfsInfoTask).ConfigureAwait(false);
+                var gitInfo = await gitInfoTask.ConfigureAwait(false);
+                var tfsInfo = await tfsInfoTask.ConfigureAwait(false);
+                _messageHub.Publish(gitInfo);
+                _messageHub.Publish(tfsInfo);
+                return new CombinedInfo(gitInfo, tfsInfo);
+            }
+            finally
+            {
+                _updateInfoSemaphore.Release();
+            }
         }
 
         private async void OpenUnshelveDialogAsync()
         {
-            var info = await UpdateInfoAsync(_cancellationTokenSourceProvider.Token);
+            var token = _cancellationTokenSourceProvider.ResetTokenIfNeeded();
+            var info = await UpdateInfoAsync(token);
             UnshelveViewModel = _unshelveViewModelFactory(DirectoryPath, info.GitInfo, info.TfsInfo);
         }
 
@@ -547,7 +557,6 @@ namespace GitTfsShell.ViewModel
                         tfsInfo = await tfsInfoTask.ConfigureAwait(false);
                         if (tfsInfo == null)
                         {
-                            _messageHub.Publish("Not a TFS workspace".ToError());
                             DirectoryReRenderSwitch = !DirectoryReRenderSwitch;
                             return;
                         }
@@ -589,17 +598,24 @@ namespace GitTfsShell.ViewModel
                     {
                         SizeToContent = SizeToContent.Manual;
                         ResizeMode = ResizeMode.CanResize;
-                        MinHeight = 700;
+                        MinHeight = WithInfoMinHeight;
                     }
                     else
                     {
                         SizeToContent = SizeToContent.WidthAndHeight;
                         ResizeMode = ResizeMode.CanMinimize;
-                        MinHeight = 200;
+                        MinHeight = NoInfoMinHeight;
                     }
+
                     Top = (SystemParameters.WorkArea.Height - MinHeight) / 2;
+                    var gitDirectoryPath = Path.Combine(DirectoryPath, ".git");
+                    if (!Directory.Exists(gitDirectoryPath))
+                    {
+                        return;
+                    }
+
                     _fileSystemWatcher.EnableRaisingEvents = false;
-                    _fileSystemWatcher.Path = Path.Combine(DirectoryPath, ".git");
+                    _fileSystemWatcher.Path = gitDirectoryPath;
                     _fileSystemWatcher.EnableRaisingEvents = true;
                 },
                 null);

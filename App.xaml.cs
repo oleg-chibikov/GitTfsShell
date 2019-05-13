@@ -11,7 +11,7 @@ using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Scar.Common;
-using Scar.Common.ApplicationStartup;
+using Scar.Common.ApplicationLifetime;
 using Scar.Common.Async;
 using Scar.Common.Messages;
 using Scar.Common.MVVM.Commands;

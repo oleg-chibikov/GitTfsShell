@@ -167,7 +167,7 @@ namespace GitTfsShell.Core
                         var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branchName, uncommittedFilesCount, isDirty, commitMessages.Length, conflictsCount);
                         if (conflictsCount > 0)
                         {
-                            _messageHub.Publish($"There are {conflictsCount} conflicts. Please solve them".ToWarning());
+                            throw new InvalidOperationException($"There are {conflictsCount} conflicts. Please solve them");
                         }
 
                         _logger.Debug("Got Git info");
