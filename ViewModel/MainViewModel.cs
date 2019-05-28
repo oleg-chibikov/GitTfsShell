@@ -128,7 +128,7 @@ namespace GitTfsShell.ViewModel
             processUtility.ProcessMessageFired += ProcessUtility_ProcessMessageFired;
             processUtility.ProcessErrorFired += ProcessUtility_ProcessErrorFired;
 
-            ChooseDirectoryCommand = AddCommand(ChooseDirectory, () => CanBrowse);
+            ChooseDirectoryCommand = AddCommand(ChooseDirectoryAsync, () => CanBrowse);
             SetDirectoryCommand = AddCommand<string>(SetDirectoryAsync, directory => CanBrowse);
             PullCommand = AddCommand(GitTfsPull, () => CanExecuteGitTfsAction);
             OpenShelveDialogCommand = AddCommand(OpenShelveDialogAsync, () => CanExecuteGitTfsAction);
@@ -143,9 +143,13 @@ namespace GitTfsShell.ViewModel
                 IsFolderPicker = true,
                 InitialDirectory = DirectoryPath
             };
+            var savedUsedPaths = Settings.Default.UsedDirectoryPaths;
+            UsedPaths = string.IsNullOrEmpty(savedUsedPaths)
+                ? new ObservableCollection<string>()
+                : new ObservableCollection<string>(savedUsedPaths.Split(UsedPathsSeparator).Select(x => x.Trim()).Where(x => x != string.Empty));
             if (!string.IsNullOrWhiteSpace(Settings.Default.DirectoryPath))
             {
-                SetDirectoryAsync(Settings.Default.DirectoryPath);
+                _ = SetDirectoryAsync(Settings.Default.DirectoryPath);
             }
 
             _subscriptionTokens.Add(messageHub.Subscribe<Message>(OnNewMessage));
@@ -163,10 +167,14 @@ namespace GitTfsShell.ViewModel
             _fileSystemWatcher.Changed += FileSystemWatcher_Changed;
         }
 
+        private const char UsedPathsSeparator = ',';
+
         public bool CanBrowse => !IsLoading;
 
         [DependsOn(nameof(IsLoading))]
         public bool CanCancel => IsLoading;
+
+        public ObservableCollection<string> UsedPaths { get; }
 
         [NotNull]
         public IRefreshableCommand CancelCommand { get; }
@@ -195,6 +203,22 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         public string DirectoryPath { get; private set; } = string.Empty;
 
+        [NotNull]
+        public string DirectoryPathHandler
+        {
+            get => _directoryPathHandler;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    return;
+                }
+
+                _directoryPathHandler = value;
+                _ = SetDirectoryAsync(value);
+            }
+        }
+
         [CanBeNull]
         public GitInfo GitInfo
         {
@@ -208,6 +232,9 @@ namespace GitTfsShell.ViewModel
 
         [DependsOn(nameof(TfsInfo), nameof(GitInfo))]
         public bool HasInfo => GitInfo != null || TfsInfo != null;
+
+        [DependsOn(nameof(HasInfo), nameof(IsLoading))]
+        public bool HasInfoOrIsLoading => HasInfo || IsLoading;
 
         public bool IsDialogOpen { get; private set; }
 
@@ -341,17 +368,18 @@ namespace GitTfsShell.ViewModel
             _cmdUtility.CopyToClipboard(CreatedShelvesetName);
         }
 
-        private void ChooseDirectory()
+        [NotNull]
+        private Task ChooseDirectoryAsync()
         {
             var result = _dialog.ShowDialog();
             if (result != CommonFileDialogResult.Ok)
             {
-                return;
+                return Task.CompletedTask;
             }
 
             var directoryPath = _dialog.FileNames.Single();
 
-            SetDirectoryAsync(directoryPath);
+            return SetDirectoryAsync(directoryPath);
         }
 
         private void ClearAll()
@@ -456,6 +484,8 @@ namespace GitTfsShell.ViewModel
         }
 
         private readonly SemaphoreSlim _updateInfoSemaphore = new SemaphoreSlim(1, 1);
+        [NotNull]
+        private string _directoryPathHandler = string.Empty;
 
         [NotNull]
         [ItemNotNull]
@@ -537,7 +567,8 @@ namespace GitTfsShell.ViewModel
                 null);
         }
 
-        private async void SetDirectoryAsync(string directoryPath)
+        [NotNull]
+        private async Task SetDirectoryAsync(string directoryPath)
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
             {
@@ -568,6 +599,7 @@ namespace GitTfsShell.ViewModel
                             var confirmationResult = await ConfirmRepositoryCreationAsync();
                             if (confirmationResult)
                             {
+                                SetFullView();
                                 _tfsUtility.GetLatest(tfsInfo);
                                 await _gitTfsUtility.CloneAsync(tfsInfo, directoryPath, cancellationToken).ConfigureAwait(false);
                                 gitInfo = await _gitUtility.GetInfoAsync(directoryPath).ConfigureAwait(false);
@@ -578,6 +610,12 @@ namespace GitTfsShell.ViewModel
                                 DirectoryReRenderSwitch = !DirectoryReRenderSwitch;
                                 return;
                             }
+                        }
+
+                        if (!UsedPaths.Contains(directoryPath))
+                        {
+                            _synchronizationContext.Send(x => UsedPaths.Add(directoryPath), null);
+                            Settings.Default.UsedDirectoryPaths = string.Join(UsedPathsSeparator.ToString(), UsedPaths);
                         }
 
                         Settings.Default.DirectoryPath = directoryPath;
@@ -596,18 +634,13 @@ namespace GitTfsShell.ViewModel
                     RaiseGitTfsCommandsCanExecuteChanged();
                     if (HasInfo)
                     {
-                        SizeToContent = SizeToContent.Manual;
-                        ResizeMode = ResizeMode.CanResize;
-                        MinHeight = WithInfoMinHeight;
+                        SetFullView();
                     }
                     else
                     {
-                        SizeToContent = SizeToContent.WidthAndHeight;
-                        ResizeMode = ResizeMode.CanMinimize;
-                        MinHeight = NoInfoMinHeight;
+                        SetMiniView();
                     }
 
-                    Top = (SystemParameters.WorkArea.Height - MinHeight) / 2;
                     var gitDirectoryPath = Path.Combine(DirectoryPath, ".git");
                     if (!Directory.Exists(gitDirectoryPath))
                     {
@@ -619,6 +652,27 @@ namespace GitTfsShell.ViewModel
                     _fileSystemWatcher.EnableRaisingEvents = true;
                 },
                 null);
+        }
+
+        private void AdjustTop()
+        {
+            Top = (SystemParameters.WorkArea.Height - MinHeight) / 2;
+        }
+
+        private void SetMiniView()
+        {
+            SizeToContent = SizeToContent.WidthAndHeight;
+            ResizeMode = ResizeMode.CanMinimize;
+            MinHeight = NoInfoMinHeight;
+            AdjustTop();
+        }
+
+        private void SetFullView()
+        {
+            SizeToContent = SizeToContent.Manual;
+            ResizeMode = ResizeMode.CanResize;
+            MinHeight = WithInfoMinHeight;
+            AdjustTop();
         }
 
         private async Task WindowClosing()

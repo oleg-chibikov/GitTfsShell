@@ -23,16 +23,16 @@ namespace GitTfsShell.ViewModel
     public sealed class UnshelveViewModel : BaseViewModel, IDataErrorInfo
     {
         [CanBeNull]
-        private static string _currentBranchName;
+        private string _currentBranchName;
 
         [CanBeNull]
-        private static string _currentShelvesetName;
+        private string _currentShelvesetName;
 
         [CanBeNull]
-        private static UserInfo _currentUser;
+        private UserInfo _currentUser;
 
         [CanBeNull]
-        private static string _currentUsersSearchPattern;
+        private string _currentUsersSearchPattern;
 
         [NotNull]
         private readonly ICmdUtility _cmdUtility;

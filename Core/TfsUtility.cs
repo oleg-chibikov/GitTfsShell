@@ -88,7 +88,7 @@ namespace GitTfsShell.Core
                     {
                         _logger.Trace("Getting TFS info...");
 
-                        var workspace = _versionControlServer.TryGetWorkspace(directoryPath);
+                        var workspace = FindWorkspaceByPath(directoryPath);
                         if (workspace == null)
                         {
                             _messageHub.Publish(new Message(new Exception("Not a TFS workspace"))); // Should be an exception to show a message as a popup (message list still not available)
@@ -168,6 +168,20 @@ namespace GitTfsShell.Core
             return exists;
         }
 
+        private Workspace FindWorkspaceByPath(string workspacePath)
+        {
+            var workspaceInfo = Workstation.Current.GetLocalWorkspaceInfo(workspacePath);
+
+            if (workspaceInfo != null)
+            {
+                return _versionControlServer.GetWorkspace(workspaceInfo);
+            }
+
+            // No Workspace found using method 1, try to query all workspaces the user has on this machine.
+            var workspaces = _versionControlServer.QueryWorkspaces(null, Environment.UserName, Environment.MachineName);
+            return (from w in workspaces from f in w.Folders where f.LocalItem.Equals(workspacePath) select w).FirstOrDefault();
+        }
+
         private void DeleteTempWorkspace(WorkingFolder mapping)
         {
             try
@@ -216,8 +230,8 @@ namespace GitTfsShell.Core
                 try
                 {
                     tfsInfo.Workspace.CreateMapping(mapping);
+                    FindWorkspaceByPath(directoryPath); // to verify that workspace was created
                     _messageHub.Publish("Successfully restored TFS mapping".ToSuccess());
-                    _versionControlServer.GetWorkspace(directoryPath); // to verify that workspace was created
                     restored = true;
                     break;
                 }

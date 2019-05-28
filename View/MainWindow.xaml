@@ -55,17 +55,20 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBox behaviors:KeyboardFocusBehavior.On="{Binding RelativeSource={RelativeSource Self}, Mode=OneTime}"
+                    <ComboBox behaviors:KeyboardFocusBehavior.On="{Binding RelativeSource={RelativeSource Self}, Mode=OneTime}"
                         IsEnabled="{Binding CanBrowse, Mode=OneWay}"
                         Grid.Column="0"
                         MinWidth="300"
-                        Text="{Binding DirectoryPath, Mode=OneWay}">
-                        <TextBox.InputBindings>
-                            <KeyBinding CommandParameter="{Binding Text, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TextBox}}"
+                        IsEditable="True"
+                        SelectedItem="{Binding DirectoryPathHandler, Mode=OneWayToSource}"
+                        Text="{Binding DirectoryPath, Mode=OneWay}"
+                        ItemsSource="{Binding UsedPaths, Mode=OneWay}">
+                        <ComboBox.InputBindings>
+                            <KeyBinding CommandParameter="{Binding Text, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ComboBox}}"
                                 Command="{Binding SetDirectoryCommand, Mode=OneTime}"
                                 Key="Enter" />
-                        </TextBox.InputBindings>
-                    </TextBox>
+                        </ComboBox.InputBindings>
+                    </ComboBox>
                     <Button Grid.Column="1"
                         Command="{Binding ChooseDirectoryCommand, Mode=OneTime}"
                         Content="Browse..." />
@@ -99,7 +102,7 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
-            <ListBox Visibility="{Binding HasInfo, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
+            <ListBox Visibility="{Binding HasInfoOrIsLoading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Grid.Row="1"
                 AlternationCount="2"
                 VerticalAlignment="Stretch"
