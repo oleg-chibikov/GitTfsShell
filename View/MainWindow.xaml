@@ -62,7 +62,7 @@
                         IsEditable="True"
                         SelectedItem="{Binding DirectoryPathHandler, Mode=OneWayToSource}"
                         Text="{Binding DirectoryPath, Mode=OneWay}"
-                        ItemsSource="{Binding UsedPaths, Mode=OneWay}">
+                        ItemsSource="{Binding UsedPaths, Mode=OneTime}">
                         <ComboBox.InputBindings>
                             <KeyBinding CommandParameter="{Binding Text, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ComboBox}}"
                                 Command="{Binding SetDirectoryCommand, Mode=OneTime}"
@@ -95,7 +95,9 @@
                                 <materialDesign:PackIcon Kind="ContentCopy" />
                             </Button>
                         </StackPanel>
-                        <view:GitInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
+
+                        <ComboBox IsEnabled="{Binding IsLoading, Mode=OneWay, Converter={StaticResource ReverseBooleanConverter}}" FontWeight="Bold" ItemsSource="{Binding Branches, Mode=OneTime}" DisplayMemberPath="FriendlyName" SelectedItem="{Binding Branch, Mode=TwoWay}" />
+                            <view:GitInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             DataContext="{Binding GitInfo, Mode=OneWay}" />
                         <view:TfsInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             DataContext="{Binding TfsInfo, Mode=OneWay}" />

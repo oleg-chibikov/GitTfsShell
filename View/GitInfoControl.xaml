@@ -12,10 +12,9 @@
     Style="{StaticResource Control}"
     Padding="10"
     d:DataContext="{d:DesignInstance d:Type=data:GitInfo}">
-    <StackPanel commonView:MarginSetter.Margin="10">
+    <StackPanel  commonView:MarginSetter.Margin="10">
         <TextBlock FontFamily="{StaticResource FontHeader}"
             Text="GIT" />
-        <controls:SelectableTextBlock Foreground="Gold" FontWeight="Bold" Text="{Binding BranchName, Mode=OneTime, StringFormat=Branch: {0}}" />
         <controls:SelectableTextBlock Text="{Binding UncommittedFilesCount, Mode=OneTime, StringFormat=Uncommitted changes: {0}}" />
         <controls:SelectableTextBlock Text="{Binding NonMergeBranchCommitsCount, Mode=OneTime, StringFormat=Commits count in branch: {0}}" />
         <controls:SelectableTextBlock Text="{Binding CommitMessage, Mode=OneTime, StringFormat=Comment: {0}}" />

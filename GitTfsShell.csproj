@@ -71,6 +71,7 @@
     <Compile Include="Core\CmdUtility.cs" />
     <Compile Include="Core\IGitTfsUtility.cs" />
     <Compile Include="Core\ProcessCommands.cs" />
+    <Compile Include="Data\CancellationState.cs" />
     <Compile Include="Data\UserInfo.cs" />
     <Compile Include="Data\GitInfo.cs" />
     <Compile Include="Core\GitTfsUtility.cs" />

@@ -32,7 +32,7 @@ namespace GitTfsShell.Core
             _ = message ?? throw new ArgumentNullException(nameof(message));
 
             _messageHub.Publish($"Adding {message} to the commit message...".ToMessage());
-            var lastCommit = gitInfo.Repo.Head.Tip;
+            var lastCommit = gitInfo.Branch.Tip;
             try
             {
                 gitInfo.Repo.Refs.RewriteHistory(
@@ -123,25 +123,30 @@ namespace GitTfsShell.Core
                         }
 
                         var repo = new Repository(directoryPath);
+                        var conflictsCount = repo.Index.Conflicts.Count();
+                        if (conflictsCount > 0)
+                        {
+                            throw new InvalidOperationException(conflictsCount == 1 ? $"There is {conflictsCount} conflict. Please solve it" : $"There are {conflictsCount} conflicts. Please solve them");
+                        }
+
+                        var branches = repo.Branches.Where(x => !x.IsRemote).OrderBy(x => x.CanonicalName == "master").ThenBy(x => x.FriendlyName).ToList();
                         var status = repo.RetrieveStatus();
                         var isDirty = status.IsDirty;
-                        var branchName = repo.Head.FriendlyName;
+                        var branch = branches.Single(x => x.CanonicalName == repo.Head.CanonicalName);
                         var uncommittedFilesCount = 0;
                         string[] commitMessages;
-                        if (repo.Head.CanonicalName != "master")
+                        if (branch.CanonicalName != "master")
                         {
                             _logger.Trace("Calculating commits count...");
                             uncommittedFilesCount = status.Added.Count() + status.Modified.Count() + status.Removed.Count();
                             _logger.Trace("Getting commits messages...");
-                            commitMessages = GetCommitMessagesFromBranchAsync(repo.Head, repo).ToArray();
+                            commitMessages = GetCommitMessagesFromBranchAsync(branch, repo).ToArray();
                             _logger.Debug("Got commit messages and count");
                         }
                         else
                         {
                             commitMessages = new string[0];
                         }
-
-                        var conflictsCount = repo.Index.Conflicts.Count();
 
                         // var master = repo.Branches["master"];
                         // var nonMergeCommits = GetCommitsDiff(repo, master)
@@ -164,11 +169,8 @@ namespace GitTfsShell.Core
                         // BeautifyMessage(repo.Head.Tip.Message)
                         // };
                         // }
-                        var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branchName, uncommittedFilesCount, isDirty, commitMessages.Length, conflictsCount);
-                        if (conflictsCount > 0)
-                        {
-                            throw new InvalidOperationException($"There are {conflictsCount} conflicts. Please solve them");
-                        }
+
+                        var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branch, uncommittedFilesCount, isDirty, commitMessages.Length, conflictsCount, branches);
 
                         _logger.Debug("Got Git info");
                         return gitInfo;

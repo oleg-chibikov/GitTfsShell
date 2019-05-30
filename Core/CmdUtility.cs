@@ -56,7 +56,7 @@ namespace GitTfsShell.Core
             _messageHub.Publish($"'{command}' has been executed successfully".ToSuccess());
         }
 
-        public async Task ExecuteTaskAsync(Func<CancellationToken, Task> action, bool notifySuccess)
+        public async Task ExecuteTaskAsync(Func<CancellationToken, Task> action, bool notifySuccess, bool preventCancellation)
         {
             _ = action ?? throw new ArgumentNullException(nameof(action));
 
@@ -64,6 +64,10 @@ namespace GitTfsShell.Core
                     async cancellationToken => await Task.Run(
                             async () =>
                             {
+                                if (preventCancellation)
+                                {
+                                    _messageHub.Publish(CancellationState.Forbidden);
+                                }
                                 _messageHub.Publish(TaskState.Started);
                                 try
                                 {
@@ -79,6 +83,10 @@ namespace GitTfsShell.Core
                                 {
                                     _messageHub.Publish(ex.ToMessage());
                                     _messageHub.Publish(TaskState.Error);
+                                }
+                                finally
+                                {
+                                    _messageHub.Publish(CancellationState.Allowed);
                                 }
                             },
                             cancellationToken)

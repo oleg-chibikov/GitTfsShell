@@ -197,4 +197,5 @@
     <converters:DialogTypeToHeaderConverter x:Key="DialogTypeToHeaderConverter" />
     <converters:GitConflictsToBrushConverter x:Key="GitConflictsToBrushConverter" />
     <commonConverters:ReverseBoolToVisibilityConverter x:Key="ReverseBoolToVisibilityConverter" />
+    <commonConverters:ReverseBooleanConverter x:Key="ReverseBooleanConverter" />
 </ResourceDictionary>

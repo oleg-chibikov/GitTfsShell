@@ -247,7 +247,7 @@ namespace GitTfsShell.ViewModel
                 commitCount++;
             }
 
-            return string.Format(Settings.Default.ShelvesetTemplate, _gitInfo.BranchName, commitCount);
+            return string.Format(Settings.Default.ShelvesetTemplate, _gitInfo.Branch.FriendlyName, commitCount);
         }
 
         private void OnTaskAction(TaskState taskState)

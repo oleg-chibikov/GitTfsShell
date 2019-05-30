@@ -14,6 +14,7 @@ using GitTfsShell.Data;
 using GitTfsShell.Properties;
 using GitTfsShell.View;
 using JetBrains.Annotations;
+using LibGit2Sharp;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using PropertyChanged;
 using Scar.Common;
@@ -85,6 +86,8 @@ namespace GitTfsShell.ViewModel
         [CanBeNull]
         private string _createdShelvesetUrl;
 
+        private bool _changingBranchFromCode;
+
         [NotNull]
         private readonly FileSystemWatcher _fileSystemWatcher;
 
@@ -154,6 +157,7 @@ namespace GitTfsShell.ViewModel
 
             _subscriptionTokens.Add(messageHub.Subscribe<Message>(OnNewMessage));
             _subscriptionTokens.Add(messageHub.Subscribe<TaskState>(OnTaskAction));
+            _subscriptionTokens.Add(messageHub.Subscribe<CancellationState>(OnCancellationStateChange));
             _subscriptionTokens.Add(messageHub.Subscribe<DialogType>(OnDialogChanged));
             _subscriptionTokens.Add(messageHub.Subscribe<GitInfo>(OnGitInfoChanged));
             _subscriptionTokens.Add(messageHub.Subscribe<TfsInfo>(OnTfsInfoChanged));
@@ -171,9 +175,12 @@ namespace GitTfsShell.ViewModel
 
         public bool CanBrowse => !IsLoading;
 
-        [DependsOn(nameof(IsLoading))]
-        public bool CanCancel => IsLoading;
+        [DependsOn(nameof(IsLoading), nameof(PreventCancellation))]
+        public bool CanCancel => IsLoading && !PreventCancellation;
 
+        private bool PreventCancellation { get; set; }
+
+        [NotNull]
         public ObservableCollection<string> UsedPaths { get; }
 
         [NotNull]
@@ -226,9 +233,44 @@ namespace GitTfsShell.ViewModel
             private set
             {
                 _gitInfo = value;
+                _synchronizationContext.Send(
+                    x =>
+                    {
+                        Branches.Clear();
+                        if (value != null)
+                        {
+                            foreach (var branch in value.Branches)
+                            {
+                                Branches.Add(branch);
+                            }
+
+                            _changingBranchFromCode = true;
+                            Branch = value.Branch;
+                            _changingBranchFromCode = false;
+                        }
+
+                    },null);
+
                 RaiseGitTfsCommandsCanExecuteChanged();
             }
         }
+
+        [CanBeNull]
+        public Branch Branch
+        {
+            get => _branch;
+            set
+            {
+                var changed = value != null && (_branch == null || _branch.CanonicalName != value.CanonicalName);
+                _branch = value;
+                if (GitInfo != null && changed && !_changingBranchFromCode)
+                {
+                    _ = SwitchBranchAsync(GitInfo.Repo, value);
+                }
+            }
+        }
+
+        public ObservableCollection<Branch> Branches { get; } = new ObservableCollection<Branch>();
 
         [DependsOn(nameof(TfsInfo), nameof(GitInfo))]
         public bool HasInfo => GitInfo != null || TfsInfo != null;
@@ -359,8 +401,11 @@ namespace GitTfsShell.ViewModel
 
         private void Cancel()
         {
-            _cancellationTokenSourceProvider.Cancel();
-            _messageHub.Publish("Operation canceled".ToWarning());
+            if (!PreventCancellation)
+            {
+                _cancellationTokenSourceProvider.Cancel();
+                _messageHub.Publish("Operation canceled".ToWarning());
+            }
         }
 
         private void CopyShelvesetToClipboard()
@@ -418,7 +463,7 @@ namespace GitTfsShell.ViewModel
 
         private void OnGitInfoChanged([CanBeNull] GitInfo gitInfo)
         {
-            GitInfo?.Repo.Dispose();
+            GitInfo?.Dispose();
             GitInfo = gitInfo;
         }
 
@@ -433,6 +478,18 @@ namespace GitTfsShell.ViewModel
             _ = data ?? throw new ArgumentNullException(nameof(data));
             CreatedShelvesetName = data.Name;
             _createdShelvesetUrl = _tfsUtility.GetShelvesetUrl(data, TfsInfo);
+        }
+
+        [NotNull]
+        private Task SwitchBranchAsync(IRepository repo, Branch branch)
+        {
+            return _cmdUtility.ExecuteTaskAsync(cancellationToken =>
+            {
+                _messageHub.Publish($"Switching branch to {branch.FriendlyName}...".ToMessage());
+                Commands.Checkout(repo, branch);
+                _messageHub.Publish($"Branch has been switched to {branch.FriendlyName}".ToSuccess());
+                return Task.CompletedTask;
+            }, false, true);
         }
 
         private void OnTaskAction(TaskState taskState)
@@ -457,6 +514,11 @@ namespace GitTfsShell.ViewModel
             }
         }
 
+        private void OnCancellationStateChange(CancellationState cancellationState)
+        {
+            PreventCancellation = cancellationState == CancellationState.Forbidden;
+        }
+
         private void OnTfsInfoChanged([CanBeNull] TfsInfo tfsInfo)
         {
             TfsInfo = tfsInfo;
@@ -476,7 +538,7 @@ namespace GitTfsShell.ViewModel
             public TfsInfo TfsInfo { get; }
         }
 
-        private async void OpenShelveDialogAsync()
+        private async Task OpenShelveDialogAsync()
         {
             var token = _cancellationTokenSourceProvider.ResetTokenIfNeeded();
             var info = await UpdateInfoAsync(token);
@@ -486,6 +548,9 @@ namespace GitTfsShell.ViewModel
         private readonly SemaphoreSlim _updateInfoSemaphore = new SemaphoreSlim(1, 1);
         [NotNull]
         private string _directoryPathHandler = string.Empty;
+
+        [CanBeNull]
+        private Branch _branch;
 
         [NotNull]
         [ItemNotNull]
@@ -621,9 +686,14 @@ namespace GitTfsShell.ViewModel
                         Settings.Default.DirectoryPath = directoryPath;
                         Settings.Default.Save();
                     },
-                    false)
+                    false, true)
                 .ConfigureAwait(false);
 
+            UpdateViewAfterDirectoryChange(directoryPath, tfsInfo, gitInfo);
+        }
+
+        private void UpdateViewAfterDirectoryChange(string directoryPath, TfsInfo tfsInfo, GitInfo gitInfo)
+        {
             _synchronizationContext.Send(
                 x =>
                 {
@@ -677,11 +747,16 @@ namespace GitTfsShell.ViewModel
 
         private async Task WindowClosing()
         {
+            //TODO: how to make this happen before the BaseWindow.Closing?
             var notCompleted = !_cancellationTokenSourceProvider.CurrentTask.IsCompleted;
-            _cancellationTokenSourceProvider.Cancel();
+            if (!PreventCancellation)
+            {
+                _cancellationTokenSourceProvider.Cancel();
+            }
+
             if (notCompleted)
             {
-                _messageHub.Publish("Operation canceled".ToWarning());
+                _messageHub.Publish((PreventCancellation ? "Cannot cancel the current operation. Waiting..." : "Operation canceled").ToWarning());
             }
 
             await _cancellationTokenSourceProvider.CurrentTask.ConfigureAwait(false);
