@@ -291,9 +291,7 @@ namespace GitTfsShell.ViewModel
                         }
 
                         _messageHub.Publish(new ShelvesetData(shelvesetName));
-                        _synchronizationContext.Post(
-                            x => _cmdUtility.CopyToClipboard(shelvesetName),
-                            null);
+                        _synchronizationContext.Post(x => _cmdUtility.CopyToClipboard(shelvesetName), null);
                         _messageHub.Publish(DialogType.None);
 
                         if (CommitDirty)

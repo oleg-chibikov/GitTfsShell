@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -31,6 +32,11 @@ namespace GitTfsShell.ViewModel
     [UsedImplicitly]
     public sealed class MainViewModel : BaseViewModel
     {
+        private const int NoInfoMinHeight = 100;
+        private const int WithInfoMinHeight = 700;
+
+        private const char UsedPathsSeparator = ',';
+
         [NotNull]
         private readonly ICancellationTokenSourceProvider _cancellationTokenSourceProvider;
 
@@ -47,6 +53,9 @@ namespace GitTfsShell.ViewModel
         private readonly CommonOpenFileDialog _dialog;
 
         [NotNull]
+        private readonly FileSystemWatcher _fileSystemWatcher;
+
+        [NotNull]
         private readonly IGitTfsUtility _gitTfsUtility;
 
         [NotNull]
@@ -59,6 +68,9 @@ namespace GitTfsShell.ViewModel
 
         [NotNull]
         private readonly Func<string, TfsInfo, PullViewModel> _pullViewModelFactory;
+
+        [NotNull]
+        private readonly IRateLimiter _rateLimiter;
 
         [NotNull]
         private readonly Func<string, GitInfo, TfsInfo, ShelveViewModel> _shelveViewModelFactory;
@@ -75,6 +87,19 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         private readonly Func<string, GitInfo, TfsInfo, UnshelveViewModel> _unshelveViewModelFactory;
 
+        private readonly SemaphoreSlim _updateInfoSemaphore = new SemaphoreSlim(1, 1);
+
+        [CanBeNull]
+        private Branch _branch;
+
+        private bool _changingBranchFromCode;
+
+        [CanBeNull]
+        private string _createdShelvesetUrl;
+
+        [NotNull]
+        private string _directoryPathHandler = string.Empty;
+
         [CanBeNull]
         private GitInfo _gitInfo;
 
@@ -82,17 +107,6 @@ namespace GitTfsShell.ViewModel
 
         [CanBeNull]
         private TfsInfo _tfsInfo;
-
-        [CanBeNull]
-        private string _createdShelvesetUrl;
-
-        private bool _changingBranchFromCode;
-
-        [NotNull]
-        private readonly FileSystemWatcher _fileSystemWatcher;
-
-        private const int NoInfoMinHeight = 100;
-        private const int WithInfoMinHeight = 700;
 
         public MainViewModel(
             [NotNull] SynchronizationContext synchronizationContext,
@@ -169,9 +183,11 @@ namespace GitTfsShell.ViewModel
                 InternalBufferSize = 64 * 1024
             };
             _fileSystemWatcher.Changed += FileSystemWatcher_Changed;
+
+            Version = GetProgramVersion();
         }
 
-        private const char UsedPathsSeparator = ',';
+        public string Version { get; }
 
         public bool CanBrowse => !IsLoading;
 
@@ -203,9 +219,6 @@ namespace GitTfsShell.ViewModel
         public int MinHeight { get; private set; } = NoInfoMinHeight;
 
         public double Top { get; set; }
-
-        [NotNull]
-        private readonly IRateLimiter _rateLimiter;
 
         [NotNull]
         public string DirectoryPath { get; private set; } = string.Empty;
@@ -248,8 +261,8 @@ namespace GitTfsShell.ViewModel
                             Branch = value.Branch;
                             _changingBranchFromCode = false;
                         }
-
-                    },null);
+                    },
+                    null);
 
                 RaiseGitTfsCommandsCanExecuteChanged();
             }
@@ -338,6 +351,14 @@ namespace GitTfsShell.ViewModel
             }
         }
 
+        [NotNull]
+        private static string GetProgramVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            return fvi.FileVersion;
+        }
+
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -357,7 +378,8 @@ namespace GitTfsShell.ViewModel
 
         private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            _rateLimiter.Throttle(TimeSpan.FromSeconds(3),
+            _rateLimiter.Throttle(
+                TimeSpan.FromSeconds(3),
                 () => Task.Run(
                     async () =>
                     {
@@ -444,9 +466,9 @@ namespace GitTfsShell.ViewModel
         private void OnDialogChanged(DialogType dialogType)
         {
             switch (dialogType)
-                    {
+            {
                 case DialogType.None:
-                        IsDialogOpen = false;
+                    IsDialogOpen = false;
                     return;
                 case DialogType.Shelve:
                     IsDialogOpen = true;
@@ -483,13 +505,16 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         private Task SwitchBranchAsync(IRepository repo, Branch branch)
         {
-            return _cmdUtility.ExecuteTaskAsync(cancellationToken =>
-            {
-                _messageHub.Publish($"Switching branch to {branch.FriendlyName}...".ToMessage());
-                Commands.Checkout(repo, branch);
-                _messageHub.Publish($"Branch has been switched to {branch.FriendlyName}".ToSuccess());
-                return Task.CompletedTask;
-            }, false, true);
+            return _cmdUtility.ExecuteTaskAsync(
+                cancellationToken =>
+                {
+                    _messageHub.Publish($"Switching branch to {branch.FriendlyName}...".ToMessage());
+                    Commands.Checkout(repo, branch);
+                    _messageHub.Publish($"Branch has been switched to {branch.FriendlyName}".ToSuccess());
+                    return Task.CompletedTask;
+                },
+                false,
+                true);
         }
 
         private void OnTaskAction(TaskState taskState)
@@ -524,33 +549,12 @@ namespace GitTfsShell.ViewModel
             TfsInfo = tfsInfo;
         }
 
-        private sealed class CombinedInfo
-        {
-            public CombinedInfo([CanBeNull] GitInfo gitInfo, [CanBeNull] TfsInfo tfsInfo)
-            {
-                GitInfo = gitInfo;
-                TfsInfo = tfsInfo;
-            }
-
-            [CanBeNull]
-            public GitInfo GitInfo { get; }
-            [CanBeNull]
-            public TfsInfo TfsInfo { get; }
-        }
-
         private async Task OpenShelveDialogAsync()
         {
             var token = _cancellationTokenSourceProvider.ResetTokenIfNeeded();
             var info = await UpdateInfoAsync(token);
             ShelveViewModel = _shelveViewModelFactory(DirectoryPath, info.GitInfo, info.TfsInfo);
         }
-
-        private readonly SemaphoreSlim _updateInfoSemaphore = new SemaphoreSlim(1, 1);
-        [NotNull]
-        private string _directoryPathHandler = string.Empty;
-
-        [CanBeNull]
-        private Branch _branch;
 
         [NotNull]
         [ItemNotNull]
@@ -686,7 +690,8 @@ namespace GitTfsShell.ViewModel
                         Settings.Default.DirectoryPath = directoryPath;
                         Settings.Default.Save();
                     },
-                    false, true)
+                    false,
+                    true)
                 .ConfigureAwait(false);
 
             UpdateViewAfterDirectoryChange(directoryPath, tfsInfo, gitInfo);
@@ -760,6 +765,21 @@ namespace GitTfsShell.ViewModel
             }
 
             await _cancellationTokenSourceProvider.CurrentTask.ConfigureAwait(false);
+        }
+
+        private sealed class CombinedInfo
+        {
+            public CombinedInfo([CanBeNull] GitInfo gitInfo, [CanBeNull] TfsInfo tfsInfo)
+            {
+                GitInfo = gitInfo;
+                TfsInfo = tfsInfo;
+            }
+
+            [CanBeNull]
+            public GitInfo GitInfo { get; }
+
+            [CanBeNull]
+            public TfsInfo TfsInfo { get; }
         }
     }
 }

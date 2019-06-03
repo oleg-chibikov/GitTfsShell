@@ -22,18 +22,6 @@ namespace GitTfsShell.ViewModel
     [UsedImplicitly]
     public sealed class UnshelveViewModel : BaseViewModel, IDataErrorInfo
     {
-        [CanBeNull]
-        private string _currentBranchName;
-
-        [CanBeNull]
-        private string _currentShelvesetName;
-
-        [CanBeNull]
-        private UserInfo _currentUser;
-
-        [CanBeNull]
-        private string _currentUsersSearchPattern;
-
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
 
@@ -62,6 +50,9 @@ namespace GitTfsShell.ViewModel
         private readonly IMessageHub _messageHub;
 
         [NotNull]
+        private readonly IRateLimiter _rateLimiter;
+
+        [NotNull]
         private readonly IList<Guid> _subscriptionTokens = new List<Guid>();
 
         [NotNull]
@@ -73,8 +64,14 @@ namespace GitTfsShell.ViewModel
         [NotNull]
         private readonly ITfsUtility _tfsUtility;
 
-        [NotNull]
-        private readonly IRateLimiter _rateLimiter;
+        [CanBeNull]
+        private string _currentShelvesetName;
+
+        [CanBeNull]
+        private UserInfo _currentUser;
+
+        [CanBeNull]
+        private string _currentUsersSearchPattern;
 
         private bool _hasValidationErrors;
 
@@ -130,11 +127,7 @@ namespace GitTfsShell.ViewModel
         public static ObservableCollection<string> UserShelvesetNames { get; } = new ObservableCollection<string>();
 
         [CanBeNull]
-        public string BranchName
-        {
-            get => _currentBranchName;
-            set => _currentBranchName = value;
-        }
+        public string BranchName { get; set; }
 
         [NotNull]
         public IRefreshableCommand CancelCommand { get; }
@@ -179,6 +172,7 @@ namespace GitTfsShell.ViewModel
                 {
                     return;
                 }
+
                 UserShelvesetNames.Clear();
 
                 var shelvesets = _tfsUtility.GetShelvesets(value.Code);

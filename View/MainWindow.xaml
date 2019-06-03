@@ -96,8 +96,12 @@
                             </Button>
                         </StackPanel>
 
-                        <ComboBox IsEnabled="{Binding IsLoading, Mode=OneWay, Converter={StaticResource ReverseBooleanConverter}}" FontWeight="Bold" ItemsSource="{Binding Branches, Mode=OneTime}" DisplayMemberPath="FriendlyName" SelectedItem="{Binding Branch, Mode=TwoWay}" />
-                            <view:GitInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
+                        <ComboBox IsEnabled="{Binding IsLoading, Mode=OneWay, Converter={StaticResource ReverseBooleanConverter}}"
+                            FontWeight="Bold"
+                            ItemsSource="{Binding Branches, Mode=OneTime}"
+                            DisplayMemberPath="FriendlyName"
+                            SelectedItem="{Binding Branch, Mode=TwoWay}" />
+                        <view:GitInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             DataContext="{Binding GitInfo, Mode=OneWay}" />
                         <view:TfsInfoControl Visibility="{Binding Mode=OneWay, Converter={StaticResource NullableToVisibilityConverter}}"
                             DataContext="{Binding TfsInfo, Mode=OneWay}" />
@@ -132,6 +136,7 @@
                         Command="{Binding ShowLogsCommand, Mode=OneTime}">
                         <materialDesign:PackIcon Kind="FileDocument" />
                     </Button>
+                    <selectableTextBlock:SelectableTextBlock FontFamily="Consolas" FontSize="{StaticResource TinyFontSize}" Text="{Binding Version, Mode=OneTime}" />
                     <wpf:LoadingIndicator SpeedRatio="1"
                         Foreground="White"
                         IsActive="{Binding IsLoading, Mode=OneWay}"
