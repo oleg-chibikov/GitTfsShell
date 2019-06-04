@@ -22,6 +22,8 @@ namespace GitTfsShell.ViewModel
     [UsedImplicitly]
     public sealed class UnshelveViewModel : BaseViewModel, IDataErrorInfo
     {
+        private const int Unlimited = 100500;
+
         [NotNull]
         private readonly ICmdUtility _cmdUtility;
 
@@ -76,6 +78,8 @@ namespace GitTfsShell.ViewModel
         private bool _hasValidationErrors;
 
         private bool _isLoading;
+
+        private static int _shelvesetsCount = 5;
 
         public UnshelveViewModel(
             [NotNull] string directoryPath,
@@ -158,6 +162,30 @@ namespace GitTfsShell.ViewModel
             }
         }
 
+        public IEnumerable<int> ShelvesetsCounts { get; } = new[]
+        {
+            5,
+            10,
+            15,
+            20,
+            50,
+            100,
+            Unlimited
+        };
+
+        public int ShelvesetsCount
+        {
+            get => _shelvesetsCount;
+            set
+            {
+                _shelvesetsCount = value;
+                if (User != null)
+                {
+                    SetShelvesets(User);
+                }
+            }
+        }
+
         [NotNull]
         public IRefreshableCommand UnshelveCommand { get; }
 
@@ -173,15 +201,7 @@ namespace GitTfsShell.ViewModel
                     return;
                 }
 
-                UserShelvesetNames.Clear();
-
-                var shelvesets = _tfsUtility.GetShelvesets(value.Code);
-                foreach (var shelveset in shelvesets)
-                {
-                    UserShelvesetNames.Add(shelveset);
-                }
-
-                ShelvesetName = shelvesets.FirstOrDefault();
+                SetShelvesets(value);
             }
         }
 
@@ -208,7 +228,8 @@ namespace GitTfsShell.ViewModel
 
                         var users = _tfsUtility.GetUsers(text);
                         foreach (var user in users.OrderByDescending(
-                            x => x.DisplayName.StartsWith(text, StringComparison.OrdinalIgnoreCase) || x.Code.StartsWith(text, StringComparison.OrdinalIgnoreCase)))
+                                x => x.DisplayName.StartsWith(text, StringComparison.OrdinalIgnoreCase) || x.Code.StartsWith(text, StringComparison.OrdinalIgnoreCase))
+                            .Take(10))
                         {
                             Users.Add(user);
                         }
@@ -279,6 +300,29 @@ namespace GitTfsShell.ViewModel
                 HasValidationErrors = _errors.Any();
                 return errorMsg;
             }
+        }
+
+        private void SetShelvesets([NotNull] UserInfo value)
+        {
+            UserShelvesetNames.Clear();
+            string firstName = null;
+            var shelvesets = _tfsUtility.GetShelvesets(value.Code);
+            if (ShelvesetsCount != Unlimited)
+            {
+                shelvesets = shelvesets.Take(ShelvesetsCount);
+            }
+
+            foreach (var shelveset in shelvesets)
+            {
+                if (firstName == null)
+                {
+                    firstName = shelveset;
+                }
+
+                UserShelvesetNames.Add(shelveset);
+            }
+
+            ShelvesetName = firstName;
         }
 
         protected override void Dispose(bool disposing)

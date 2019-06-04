@@ -31,7 +31,7 @@ namespace GitTfsShell.Core
         string GetShelvesetUrl([NotNull] ShelvesetData data, [CanBeNull] TfsInfo tfsInfo);
 
         [NotNull]
-        ICollection<string> GetShelvesets([CanBeNull] string user);
+        IEnumerable<string> GetShelvesets([CanBeNull] string user);
 
         [NotNull]
         ICollection<UserInfo> GetUsers([NotNull] string searchPattern);

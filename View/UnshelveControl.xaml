@@ -83,6 +83,7 @@
                 Command="{Binding CopyShelvesetToClipboardCommand, Mode=OneTime}">
                 <materialDesign:PackIcon Kind="ContentCopy" />
             </Button>
+            <ComboBox SelectedValue="{Binding ShelvesetsCount, Mode=TwoWay}" ItemsSource="{Binding ShelvesetsCounts, Mode=OneTime}" ToolTip="Shelvesets limit" />
         </StackPanel>
 
         <TextBox Grid.Column="1"
