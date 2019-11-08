@@ -178,7 +178,7 @@ namespace GitTfsShell.ViewModel
             _subscriptionTokens.Add(messageHub.Subscribe<ShelvesetData>(OnShelvesetEvent));
             _fileSystemWatcher = new FileSystemWatcher
             {
-                Filter = "INDEX.lock",
+                Filter = "HEAD.lock",
                 IncludeSubdirectories = true,
                 InternalBufferSize = 64 * 1024
             };
@@ -274,11 +274,12 @@ namespace GitTfsShell.ViewModel
             get => _branch;
             set
             {
-                var changed = value != null && (_branch == null || _branch.CanonicalName != value.CanonicalName);
+                var originalValue = _branch;
+                var changed = value != null && (originalValue == null || originalValue.CanonicalName != value.CanonicalName);
                 _branch = value;
                 if (GitInfo != null && changed && !_changingBranchFromCode)
                 {
-                    _ = SwitchBranchAsync(GitInfo.Repo, value);
+                    _ = SwitchBranchAsync(GitInfo.Repo, value, originalValue);
                 }
             }
         }
@@ -338,6 +339,9 @@ namespace GitTfsShell.ViewModel
 
         [AlsoNotifyFor(nameof(DirectoryPath))]
         private bool DirectoryReRenderSwitch { get; set; }
+
+        [AlsoNotifyFor(nameof(Branch))]
+        private bool BranchReRenderSwitch { get; set; }
 
         public bool IsLoading
         {
@@ -503,13 +507,26 @@ namespace GitTfsShell.ViewModel
         }
 
         [NotNull]
-        private Task SwitchBranchAsync(IRepository repo, Branch branch)
+        private Task SwitchBranchAsync(IRepository repo, Branch branch, Branch previousBranch)
         {
             return _cmdUtility.ExecuteTaskAsync(
                 cancellationToken =>
                 {
                     _messageHub.Publish($"Switching branch to {branch.FriendlyName}...".ToMessage());
-                    Commands.Checkout(repo, branch);
+                    try
+                    {
+                        Commands.Checkout(repo, branch);
+                    }
+                    catch
+                    {
+                        _synchronizationContext.Send(x =>
+                        {
+                            _branch = previousBranch;
+                            BranchReRenderSwitch = !BranchReRenderSwitch;
+                        }, null);
+                        throw;
+                    }
+
                     _messageHub.Publish($"Branch has been switched to {branch.FriendlyName}".ToSuccess());
                     return Task.CompletedTask;
                 },

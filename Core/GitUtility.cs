@@ -123,11 +123,6 @@ namespace GitTfsShell.Core
                         }
 
                         var repo = new Repository(directoryPath);
-                        var conflictsCount = repo.Index.Conflicts.Count();
-                        if (conflictsCount > 0)
-                        {
-                            throw new InvalidOperationException(conflictsCount == 1 ? $"There is {conflictsCount} conflict. Please solve it" : $"There are {conflictsCount} conflicts. Please solve them");
-                        }
 
                         var branches = repo.Branches.Where(x => !x.IsRemote).OrderBy(x => x.CanonicalName == "master").ThenBy(x => x.FriendlyName).ToList();
                         var status = repo.RetrieveStatus();
@@ -170,6 +165,7 @@ namespace GitTfsShell.Core
                         // };
                         // }
 
+                        var conflictsCount = repo.Index.Conflicts.Count();
                         var gitInfo = new GitInfo(repo, commitMessages.Distinct().ToArray(), branch, uncommittedFilesCount, isDirty, commitMessages.Length, conflictsCount, branches);
 
                         _logger.Debug("Got Git info");

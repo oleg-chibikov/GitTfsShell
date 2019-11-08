@@ -215,7 +215,7 @@ namespace GitTfsShell.ViewModel
                 _currentUsersSearchPattern = value;
                 var text = value;
                 _rateLimiter.Throttle(
-                    TimeSpan.FromMilliseconds(500),
+                    TimeSpan.FromMilliseconds(1000),
                     () =>
                     {
                         if (string.IsNullOrWhiteSpace(text))
@@ -306,11 +306,7 @@ namespace GitTfsShell.ViewModel
         {
             UserShelvesetNames.Clear();
             string firstName = null;
-            var shelvesets = _tfsUtility.GetShelvesets(value.Code);
-            if (ShelvesetsCount != Unlimited)
-            {
-                shelvesets = shelvesets.Take(ShelvesetsCount);
-            }
+            var shelvesets = _tfsUtility.GetShelvesets(value.Code, ShelvesetsCount);
 
             foreach (var shelveset in shelvesets)
             {

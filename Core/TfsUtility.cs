@@ -138,10 +138,10 @@ namespace GitTfsShell.Core
                 $"{Settings.Default.TfsUri}{(teamProjectName == null ? null : teamProjectName + "/")}_versionControl/shelveset?ss={GetShelvesetQualifiedName(data.User, data.Name)}";
         }
 
-        public IEnumerable<string> GetShelvesets(string user)
+        public IEnumerable<string> GetShelvesets(string user, int count)
         {
             _logger.TraceFormat("Getting shelvesets for {0}...", user);
-            var shelvesets = _versionControlServer.QueryShelvesets(null, user).OrderByDescending(x => x.CreationDate).Select(x => x.Name);
+            var shelvesets = _versionControlServer.QueryShelvesets(null, user).OrderByDescending(x => x.CreationDate).Take(count).Select(x => x.Name);
             _logger.DebugFormat("Got shelvesets for {0}", user);
             return shelvesets;
         }

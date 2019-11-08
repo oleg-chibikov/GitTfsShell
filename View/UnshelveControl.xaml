@@ -70,6 +70,12 @@
                     <KeyBinding Command="{Binding UnshelveCommand, Mode=OneTime}"
                         Key="Enter" />
                 </ComboBox.InputBindings>
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <!--Underscores are not visible without this-->
+                        <ContentPresenter Content="{Binding}" RecognizesAccessKey="False" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Style="{StaticResource ImageButton}"
                 Foreground="CornflowerBlue"

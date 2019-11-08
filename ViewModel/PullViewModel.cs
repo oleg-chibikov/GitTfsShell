@@ -63,7 +63,14 @@ namespace GitTfsShell.ViewModel
                     {
                         await _gitTfsUtility.PullAsync(_tfsInfo, _directoryPath, cancellationToken).ConfigureAwait(false);
                         _tfsUtility.GetLatest(_tfsInfo);
-                        _messageHub.Publish(await _gitUtility.GetInfoAsync(_directoryPath).ConfigureAwait(false));
+                        var gitInfo = await _gitUtility.GetInfoAsync(_directoryPath).ConfigureAwait(false);
+                        _messageHub.Publish(gitInfo);
+                        var conflictsCount = gitInfo?.ConflictsCount;
+                        if (conflictsCount > 0)
+                        {
+                            throw new InvalidOperationException(
+                                conflictsCount == 1 ? $"There is {conflictsCount} conflict. Please solve it" : $"There are {conflictsCount} conflicts. Please solve them");
+                        }
                     })
                 .ConfigureAwait(false);
         }
