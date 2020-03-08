@@ -124,7 +124,7 @@ namespace GitTfsShell.Core
 
                         var repo = new Repository(directoryPath);
 
-                        var branches = repo.Branches.Where(x => !x.IsRemote).OrderBy(x => x.CanonicalName == "master").ThenBy(x => x.FriendlyName).ToList();
+                        var branches = repo.Branches.Where(x => !x.IsRemote).OrderByDescending(x => x.Tip.Author.When).ToList();
                         var status = repo.RetrieveStatus();
                         var isDirty = status.IsDirty;
                         var branch = branches.Single(x => x.CanonicalName == repo.Head.CanonicalName);
